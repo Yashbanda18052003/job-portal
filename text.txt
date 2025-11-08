@@ -1,0 +1,2626 @@
+from flask import Flask,render_template,redirect,request,url_for,session,flash
+from werkzeug.security import generate_password_hash,check_password_hash
+from flask_sqlalchemy import SQLAlchemy
+from datetime import datetime
+
+app = Flask(__name__)
+app.config.from_object('config')
+app.secret_key = 'f3b5b745d3e514b0d037cf82c6e3d544'
+
+db = SQLAlchemy(app)
+
+#User model for job seeker,employer and admin
+class User(db.Model):
+    id = db.Column(db.Integer, primary_key = True)
+    name = db.Column(db.String(100), nullable=False)
+    email = db.Column(db.String(100), unique=True, nullable=False)
+    password = db.Column(db.String(100), nullable=False)
+    role = db.Column(db.String(20), default='jobseeker', nullable=False) #jobseeker, employer, admin
+
+    jobs = db.relationship('Job', backref='employer',lazy=True)
+    application = db.relationship('Application', backref='applicant',lazy=True)
+
+
+#job model(posted by employer)
+class Job(db.Model):
+    id = db.Column(db.Integer, primary_key = True)
+    title = db.Column(db.String(100), nullable=False)
+    description = db.Column(db.Text, nullable=False)
+    salary = db.Column(db.String(50))
+    location = db.Column(db.String(100))
+    company = db.Column(db.String(100))
+    posted_by = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+
+    application = db.relationship('Application', backref='job', lazy=True)
+
+#Application model(links users to they applied)
+class Application(db.Model):
+    id = db.Column(db.Integer,primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    job_id = db.Column(db.Integer, db.ForeignKey('job.id'), nullable=False)
+    date_applied = db.Column(db.DateTime)
+    status = db.Column(db.String(50), default='pending')
+
+
+
+@app.route("/")
+def index():
+    return render_template("index.html")
+
+#registeration route
+@app.route("/register", methods=["POST","GET"])
+def register():
+    if request.method == "POST":
+        name = request.form['name']
+        email = request.form['email']
+        password = request.form['password']
+        role = request.form['role']
+
+        #checking if email already exist
+
+        existing_user = User.query.filter_by(email=email).first()
+        if existing_user:
+            flash('Email already register. Please proceed with login', 'warning')
+            return redirect(url_for('login'))
+        
+        hashed_password = generate_password_hash(password)
+        new_user = User(name=name, email=email,password=hashed_password, role=role)
+        db.session.add(new_user)
+        db.session.commit()
+
+        flash("Registration successful", 'success')
+        return redirect(url_for('login'))
+    return render_template('register.html')
+
+
+#login route
+@app.route("/login", methods=["POST","GET"])
+def login():
+    if request.method == "POST":
+        email = request.form['email']
+        password = request.form['password']
+
+        user = User.query.filter_by(email=email).first()
+
+        if user and check_password_hash(user.password, password):
+            session["user_id"] = user.id
+            session["user_role"] = user.role
+            flash("Login Successful", 'success')
+            if user.role == "employer":
+                return redirect(url_for('employer_dashboard'))
+            else:
+                return redirect(url_for('jobseeker_dashboard'))
+            
+        
+        flash("Invalid credentials. Please try again.", 'danger')
+        return redirect(url_for('login'))
+    return render_template('login.html')
+
+#logout route
+
+@app.route('/logout')
+def logout():
+    session.clear()
+    flash("You have been logout", 'info')
+    return redirect(url_for('index'))
+
+
+#employer dashboard
+@app.route('/employer/dashboard')
+def employer_dashboard():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+
+    user = User.query.get(session['user_id'])
+    print(f"Logged in user: {user.name}, role: '{user.role}'")  # Debug line
+
+    if not user or user.role.strip().lower() != 'employer':
+        return "Access Denied: Only employers can view this page.", 403
+
+    return render_template('employer_dashboard.html', user=user)
+
+
+#jobseeker dashboard
+@app.route("/jobseeker/dashboard")
+def jobseeker_dashboard():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    
+    user = User.query.get(session['user_id'])
+    if not user:
+        return redirect(url_for('login'))
+    
+    return render_template('jobseeker_dashboard.html', user=user)
+
+
+#employer post job route
+@app.route('/employer/post_job', methods=["POST", "GET"])
+def post_job():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    user = User.query.get(session['user_id'])
+    if user.role != 'employer':
+
+        return "Access Denied: Only employers can post job", 403
+    if request.method == "POST":
+
+        title = request.form['title']
+        description = request.form['description']
+        company = request.form['company']
+        location = request.form['location']
+        salary = request.form['salary']
+
+        new_job = Job(
+            title=title,
+            description=description,
+            company=company,
+            location=location,
+            salary=salary,
+            posted_by=user.id
+        )
+        db.session.add(new_job)
+        db.session.commit()
+
+        return "Job posted successfully"
+    return render_template('post_job.html')
+
+# job route
+@app.route('/jobs')
+def view_jobs():
+    jobs = Job.query.all()
+    return render_template('jobs.html', jobs=jobs)
+
+
+#job apply route
+@app.route("/apply/<int:job_id>")
+def apply_job(job_id):
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    
+    user = User.query.get(session['user_id'])
+    job = Job.query.get_or_404(job_id)
+
+    #only jobseeker can apply
+    if user.role != 'jobseeker':
+        return "Access Denied: only jobseeker can apply for jobs", 403
+    
+    #check new applicattion
+    new_application = Application(
+        user_id = user.id,
+        job_id = job.id,
+        date_applied = datetime.now,
+        status = 'Pending'
+    )
+
+    db.session.add(new_application)
+    db.session.commit()
+
+    return f"You have successfully applied for {job.title} at {job.company}."
+
+
+#Employer view Apllication
+@app.route('/employer/application')
+def view_applications():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    
+    user = User.query.get(session['user_id'])
+    if user.role != 'employer':
+        return "Access Denied: Only employers can view applications.", 403
+
+    # Get all jobs posted by this employer
+    jobs = Job.query.filter_by(posted_by=user.id).all()
+    job_ids = [job.id for job in jobs]
+
+    # Get applications for those jobs
+    applications = Application.query.filter(Application.job_id.in_(job_ids)).all()
+
+    return render_template('view_applications.html', applications=applications)
+
+
+#apply jobseeker route
+@app.route('/apply/<int:job_id>', methods=['POST'])
+def apply(job_id):
+    # Check login
+    if 'user_id' not in session:
+        flash("Please login first.")
+        return redirect('/login')
+
+    user = User.query.get(session['user_id'])
+
+    # Double-check user exists and role
+    if not user or user.role != 'job_seeker':
+        flash("Access denied. Only job seekers can apply for jobs.")
+        return redirect('/login')
+
+    # Check if job exists
+    job = Job.query.get(job_id)
+    if not job:
+        flash("Job not found.")
+        return redirect('/jobs')
+
+    # Prevent duplicate applications
+    existing_app = Application.query.filter_by(user_id=user.id, job_id=job.id).first()
+    if existing_app:
+        flash("You already applied for this job.")
+        return redirect('/jobs')
+
+    # Save application
+    new_app = Application(
+        user_id=user.id,
+        job_id=job.id,
+        date_applied=datetime.now(),
+        status='pending'
+    )
+    db.session.add(new_app)
+    db.session.commit()
+
+    flash("Application submitted successfully!")
+    return redirect('/jobs')
+    
+#view applicant
+@app.route('/employer/applicants')
+def view_applicants():
+    if 'user_id' not in session:
+        flash("Please login first.")
+        return redirect('/login')
+
+    user = User.query.get(session['user_id'])
+    if user.role != 'employer':
+        flash("Access denied.")
+        return redirect('/login')
+
+    jobs = Job.query.filter_by(posted_by=user.id).all()
+    job_ids = [job.id for job in jobs]
+    applicants = Application.query.filter(Application.job_id.in_(job_ids)).all()
+
+    return render_template('view_applicants.html', applicants=applicants)
+
+
+if __name__ == "__main__":
+    with app.app_context():
+        db.create_all()
+        print("database created successfully")
+    app.run(debug=True)
+
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <!DOCTYPE html>
+<html>
+<head>
+    <title>Job Listings</title>
+</head>
+<body>
+    <h2>Available Jobs</h2>
+    
+    {% for job in jobs %}
+        <div style="border:1px solid #ccc; padding:10px; margin-bottom:10px;">
+            <h3>{{ job.title }}</h3>
+            <p><strong>Company:</strong> {{ job.company }}</p>
+            <p><strong>Location:</strong> {{ job.location }}</p>
+            <p><strong>Salary:</strong> {{ job.salary }}</p>
+            <p>{{ job.description }}</p>
+            <a href="{{ url_for('apply_job', job_id=job.id) }}">Apply Now</a>
+        </div>
+        
+    {% else %}
+        <p>No jobs available right now.</p>
+    {% endfor %}
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+from flask import Flask, render_template, redirect, request, url_for, session, flash
+from werkzeug.security import generate_password_hash, check_password_hash
+from flask_sqlalchemy import SQLAlchemy
+from datetime import datetime
+
+app = Flask(__name__)
+app.config.from_object('config')
+app.secret_key = 'f3b5b745d3e514b0d037cf82c6e3d544'
+
+db = SQLAlchemy(app)
+
+# User model
+class User(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+    email = db.Column(db.String(100), unique=True, nullable=False)
+    password = db.Column(db.String(100), nullable=False)
+    role = db.Column(db.String(20), default='jobseeker', nullable=False)  # jobseeker, employer, admin
+
+    jobs = db.relationship('Job', backref='employer', lazy=True)
+    applications = db.relationship('Application', backref='applicant', lazy=True)
+
+# Job model
+class Job(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(100), nullable=False)
+    description = db.Column(db.Text, nullable=False)
+    salary = db.Column(db.String(50))
+    location = db.Column(db.String(100))
+    company = db.Column(db.String(100))
+    posted_by = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+
+    applications = db.relationship('Application', backref='job', lazy=True)
+
+# Application model
+class Application(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    job_id = db.Column(db.Integer, db.ForeignKey('job.id'), nullable=False)
+    date_applied = db.Column(db.DateTime, default=datetime.utcnow)
+    status = db.Column(db.String(50), default='pending')
+
+@app.route("/")
+def index():
+    return render_template("index.html")
+
+# Registration
+@app.route("/register", methods=["POST", "GET"])
+def register():
+    if request.method == "POST":
+        name = request.form['name']
+        email = request.form['email']
+        password = request.form['password']
+        role = request.form['role']
+
+        existing_user = User.query.filter_by(email=email).first()
+        if existing_user:
+            flash('Email already registered. Please log in.', 'warning')
+            return redirect(url_for('login'))
+
+        hashed_password = generate_password_hash(password)
+        new_user = User(name=name, email=email, password=hashed_password, role=role)
+        db.session.add(new_user)
+        db.session.commit()
+
+        flash("Registration successful", 'success')
+        return redirect(url_for('login'))
+    return render_template('register.html')
+
+# Login
+@app.route("/login", methods=["POST", "GET"])
+def login():
+    if request.method == "POST":
+        email = request.form['email']
+        password = request.form['password']
+
+        user = User.query.filter_by(email=email).first()
+
+        if user and check_password_hash(user.password, password):
+            session["user_id"] = user.id
+            session["user_role"] = user.role
+            flash("Login Successful", 'success')
+            if user.role == "employer":
+                return redirect(url_for('employer_dashboard'))
+            else:
+                return redirect(url_for('jobseeker_dashboard'))
+
+        flash("Invalid credentials. Please try again.", 'danger')
+        return redirect(url_for('login'))
+    return render_template('login.html')
+
+# Logout
+@app.route('/logout')
+def logout():
+    session.clear()
+    flash("You have been logged out", 'info')
+    return redirect(url_for('index'))
+
+# Employer dashboard
+@app.route('/employer/dashboard')
+def employer_dashboard():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+
+    user = User.query.get(session['user_id'])
+    if not user or user.role != 'employer':
+        return "Access Denied: Only employers can view this page.", 403
+
+    return render_template('employer_dashboard.html', user=user)
+
+# Jobseeker dashboard
+@app.route("/jobseeker/dashboard")
+def jobseeker_dashboard():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+
+    user = User.query.get(session['user_id'])
+    if not user:
+        return redirect(url_for('login'))
+
+    return render_template('jobseeker_dashboard.html', user=user)
+
+# Post job (employer)
+@app.route('/employer/post_job', methods=["POST", "GET"])
+def post_job():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    user = User.query.get(session['user_id'])
+    if user.role != 'employer':
+        return "Access Denied: Only employers can post jobs", 403
+
+    if request.method == "POST":
+        title = request.form['title']
+        description = request.form['description']
+        company = request.form['company']
+        location = request.form['location']
+        salary = request.form['salary']
+
+        new_job = Job(
+            title=title,
+            description=description,
+            company=company,
+            location=location,
+            salary=salary,
+            posted_by=user.id
+        )
+        db.session.add(new_job)
+        db.session.commit()
+
+        flash("Job posted successfully!", 'success')
+        return redirect(url_for('employer_dashboard'))
+    return render_template('post_job.html')
+
+# View all jobs
+@app.route('/jobs')
+def view_jobs():
+    jobs = Job.query.all()
+    return render_template('jobs.html', jobs=jobs)
+
+# Apply for a job (jobseeker)
+@app.route('/apply/<int:job_id>', methods=['POST'])
+def apply(job_id):
+    if 'user_id' not in session or session.get('role') != 'job_seeker':
+        flash('Please login as a jobseeker to apply.')
+        return redirect(url_for('login'))
+
+    job = Job.query.get_or_404(job_id)
+    user = User.query.get(session['user_id'])
+
+    # Check if already applied
+    existing_application = Application.query.filter_by(job_id=job.id, user_id=user.id).first()
+    if existing_application:
+        flash('You have already applied for this job.')
+        return redirect(url_for('jobs'))
+
+    # Create new application
+    new_application = Application(job_id=job.id, user_id=user.id, status='Pending')
+    db.session.add(new_application)
+    db.session.commit()
+
+    flash('You have successfully applied for the job!')
+    return redirect(url_for('jobs'))
+
+
+# Employer view applications
+@app.route('/employer/applications')
+def view_applications():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+
+    user = User.query.get(session['user_id'])
+    if user.role != 'employer':
+        return "Access Denied: Only employers can view applications.", 403
+
+    jobs = Job.query.filter_by(posted_by=user.id).all()
+    job_ids = [job.id for job in jobs]
+    applications = Application.query.filter(Application.job_id.in_(job_ids)).all()
+
+    return render_template('view_applications.html', applications=applications)
+
+if __name__ == "__main__":
+    with app.app_context():
+        db.create_all()
+        print("Database created successfully")
+    app.run(debug=True)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    from flask import Flask, render_template, redirect, request, url_for,session, flash
+from flask_login import login_required, current_user,LoginManager
+from werkzeug.security import generate_password_hash, check_password_hash
+from flask_sqlalchemy import SQLAlchemy
+from datetime import datetime
+
+app = Flask(__name__)
+app.config.from_object('config')
+app.secret_key = 'f3b5b745d3e514b0d037cf82c6e3d544'
+
+
+login_manager = LoginManager()
+login_manager.init_app(app)
+login_manager.login_view = 'login'
+
+@login_manager.user_loader
+def load_user(user_id):
+    return User.query.get(int(user_id))
+
+db = SQLAlchemy(app)
+
+# User model
+class User(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+    email = db.Column(db.String(100), unique=True, nullable=False)
+    password = db.Column(db.String(100), nullable=False)
+    role = db.Column(db.String(20), default='jobseeker', nullable=False)  # jobseeker, employer, admin
+
+    jobs = db.relationship('Job', backref='employer', lazy=True)
+    applications = db.relationship('Application', backref='applicant', lazy=True)
+
+# Job model
+class Job(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(100), nullable=False)
+    description = db.Column(db.Text, nullable=False)
+    salary = db.Column(db.String(50))
+    location = db.Column(db.String(100))
+    company = db.Column(db.String(100))
+    posted_by = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+
+    applications = db.relationship('Application', backref='job', lazy=True)
+
+# Application model
+class Application(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    job_id = db.Column(db.Integer, db.ForeignKey('job.id'), nullable=False)
+    date_applied = db.Column(db.DateTime, default=datetime.utcnow)
+    status = db.Column(db.String(50), default='Pending')
+
+
+@app.route("/")
+def index():
+    return render_template("index.html")
+
+
+# Registration
+@app.route("/register", methods=["POST", "GET"])
+def register():
+    if request.method == "POST":
+        name = request.form['name']
+        email = request.form['email']
+        password = request.form['password']
+        role = request.form['role']
+
+        existing_user = User.query.filter_by(email=email).first()
+        if existing_user:
+            flash('Email already registered. Please log in.', 'warning')
+            return redirect(url_for('login'))
+
+        hashed_password = generate_password_hash(password)
+        new_user = User(name=name, email=email, password=hashed_password, role=role)
+        db.session.add(new_user)
+        db.session.commit()
+
+        flash("Registration successful", 'success')
+        return redirect(url_for('login'))
+    return render_template('register.html')
+
+
+# Login
+@app.route("/login", methods=["POST", "GET"])
+def login():
+    if request.method == "POST":
+        email = request.form['email']
+        password = request.form['password']
+
+        user = User.query.filter_by(email=email).first()
+
+        if user and check_password_hash(user.password, password):
+            session["user_id"] = user.id
+            session["user_role"] = user.role
+            flash("Login Successful", 'success')
+            if user.role == "employer":
+                return redirect(url_for('employer_dashboard'))
+            else:
+                return redirect(url_for('jobseeker_dashboard'))
+
+        flash("Invalid credentials. Please try again.", 'danger')
+        return redirect(url_for('login'))
+    return render_template('login.html')
+
+
+# Logout
+@app.route('/logout')
+def logout():
+    session.clear()
+    flash("You have been logged out", 'info')
+    return redirect(url_for('index'))
+
+
+# Employer dashboard
+@app.route('/employer/dashboard')
+def employer_dashboard():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+
+    user = User.query.get(session['user_id'])
+    if not user or user.role != 'employer':
+        return "Access Denied: Only employers can view this page.", 403
+
+    return render_template('employer_dashboard.html', user=user)
+
+
+# Jobseeker dashboard
+@app.route("/jobseeker/dashboard")
+def jobseeker_dashboard():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+
+    user = User.query.get(session['user_id'])
+    if not user:
+        return redirect(url_for('login'))
+
+    return render_template('jobseeker_dashboard.html', user=user)
+
+
+# Post job (employer)
+@app.route('/employer/post_job', methods=["POST", "GET"])
+def post_job():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    user = User.query.get(session['user_id'])
+    if user.role != 'employer':
+        return "Access Denied: Only employers can post jobs", 403
+
+    if request.method == "POST":
+        title = request.form['title']
+        description = request.form['description']
+        company = request.form['company']
+        location = request.form['location']
+        salary = request.form['salary']
+
+        new_job = Job(
+            title=title,
+            description=description,
+            company=company,
+            location=location,
+            salary=salary,
+            posted_by=user.id
+        )
+        db.session.add(new_job)
+        db.session.commit()
+
+        flash("Job posted successfully!", 'success')
+        return redirect(url_for('employer_dashboard'))
+    return render_template('post_job.html')
+
+
+# View all jobs
+@app.route('/jobs')
+def view_jobs():
+    jobs = Job.query.all()
+    return render_template('jobs.html', jobs=jobs)
+
+
+# Apply for a job (jobseeker)
+@app.route('/apply/<int:job_id>', methods=['POST'])
+@login_required
+def apply(job_id):
+    job = Job.query.get_or_404(job_id)
+    existing_application = Application.query.filter_by(job_id=job.id, jobseeker_id=current_user.id).first()
+
+    if existing_application:
+        flash('You have already applied for this job.', 'warning')
+    else:
+        application = Application(job_id=job.id, jobseeker_id=current_user.id)
+        db.session.add(application)
+        db.session.commit()
+        flash('Application submitted successfully!', 'success')
+
+    return redirect(request.referrer or url_for('job_listings'))
+
+
+
+
+
+# Employer view applications
+@app.route('/employer/applications')
+def view_applications():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+
+    user = User.query.get(session['user_id'])
+    if user.role != 'employer':
+        return "Access Denied: Only employers can view applications.", 403
+
+    jobs = Job.query.filter_by(posted_by=user.id).all()
+    job_ids = [job.id for job in jobs]
+    applications = Application.query.filter(Application.job_id.in_(job_ids)).all()
+
+    return render_template('view_applications.html', applications=applications)
+
+
+if __name__ == "__main__":
+    with app.app_context():
+        db.create_all()
+        print("Database created successfully")
+    app.run(debug=True)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+from flask import Flask,render_template,redirect,request,url_for,session
+# from flask_login import login_required, current_user,LoginManager
+from flask_sqlalchemy import SQLAlchemy
+from werkzeug.security import generate_password_hash,check_password_hash
+from datetime import datetime
+
+
+app = Flask(__name__)
+app.config.from_object('config')
+app.secret_key = "1d56fb58fbce866d1c07ff3a9a113adb"
+
+# login_manager = LoginManager()
+# login_manager.login_view = 'login'
+
+
+db = SQLAlchemy(app)
+
+#MODELS
+class User(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(100), nullable=False, unique=True)
+    email = db.Column(db.String(120), nullable=False, unique=True)
+    password = db.Column(db.String(200), nullable=False)
+    is_admin = db.Column(db.Boolean, default=False)
+    is_employer = db.Column(db.Boolean, default=False)
+    is_approved = db.Column(db.Boolean, default=False)
+    company = db.Column(db.String(200))
+    date_created = db.Column(db.DateTime, default=datetime.utcnow)
+
+class Job(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(200), nullable=False)
+    description = db.Column(db.Text, nullable=False)
+    salary = db.Column(db.String(100))
+    location = db.Column(db.String(200))
+    category = db.Column(db.String(100))
+    company = db.Column(db.String(200))
+    posted_by = db.Column(db.Integer, db.ForeignKey('user.id'))
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+class Application(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    job_id = db.Column(db.Integer, db.ForeignKey('job.id'), nullable=False)
+    cover_letter = db.Column(db.Text)
+    applied_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+#DEFAULT ADMIN CREATION
+@app.before_request
+def create_admin():
+    admin_email = 'admin@jobportal.com'
+    if not User.query.filter_by(email=admin_email).first():
+        admin = User(
+            username='admin',
+            email=admin_email,
+            is_admin=True,
+            is_approved=True
+        )
+        admin.password = generate_password_hash('admin123')
+        db.session.add(admin)
+        db.session.commit()
+        print("Admin account created.")
+
+#create admin session start
+@app.before_request
+def clear_admin_session_on_start():
+    if 'user_id' in session:
+        user = User.query.get(session['user_id'])
+        if user and user.is_admin:
+            session.pop('user_id')
+
+
+
+
+
+#CURRENT USER ROUTE
+def current_user():
+    if 'user_id' in session:
+        return User.query.get(session['user_id'])
+    return None
+
+
+#HOME PAGE
+@app.route('/')
+def index():
+    return render_template('index.html', user=current_user())
+
+#REGISTER ROUTE
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    if request.method == 'POST':
+        username = request.form.get('username', '').strip()
+        email = request.form.get('email', '').strip().lower()
+        password = request.form.get('password', '').strip()
+        is_employer = request.form.get('is_employer') == 'on'
+        company = request.form.get('company', '').strip() if is_employer else None
+
+        if not username or not email or not password:
+            return redirect(url_for('register', msg="Fill all required fields", type='error'))
+
+        if User.query.filter((User.username==username)|(User.email==email)).first():
+            return redirect(url_for('register', msg="Username or email already exists", type='error'))
+
+        user = User(
+            username=username,
+            email=email,
+            is_employer=is_employer,
+            company=company
+        )
+        user.password = generate_password_hash(password)
+
+        if not is_employer:
+            user.is_approved = True  # job seekers auto-approved
+
+        db.session.add(user)
+        db.session.commit()
+
+        return redirect(url_for('login', msg="Registered successfully", type='success'))
+
+    return render_template('register.html', user=current_user())
+
+#LOGIN ROUTE
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        email = request.form.get('email', '').strip().lower()
+        password = request.form.get('password', '').strip()
+        user = User.query.filter_by(email=email).first()
+        if not user or not check_password_hash(user.password, password):
+            return redirect(url_for('login', msg="Invalid credentials", type='error'))
+
+        session['user_id'] = user.id
+
+        # Redirect based on role
+        if user.is_admin:
+            return redirect(url_for('admin_dashboard'))
+        elif user.is_employer:
+            if user.is_approved:
+                return redirect(url_for('post_job'))
+            else:
+                return redirect(url_for('index', msg="Your employer account is not approved yet", type='info'))
+        else:
+            return redirect(url_for('index', msg="Logged in successfully", type='success'))
+
+    return render_template('login.html', user=current_user())
+
+
+#LOGOUT ROUTE
+@app.route('/logout')
+def logout():
+    session.pop('user_id', None)  # remove the logged-in user
+    return redirect(url_for('index', msg="Logged out successfully", type='info'))
+
+
+#POST JOB ROUTES
+@app.route('/post-job', methods=['GET', 'POST'])
+def post_job():
+    user = current_user()
+    if not user:
+        return redirect(url_for('login', msg="Login first", type='error'))
+    
+    if not user.is_employer:
+        return redirect(url_for('index', msg="Only employers can post jobs", type='error'))
+    
+    if not user.is_approved:
+        return redirect(url_for('index', msg="Your employer account is not approved yet", type='error'))
+    
+    if request.method == 'POST':
+        title = request.form.get('title', '').strip()
+        description = request.form.get('description', '').strip()
+        salary = request.form.get('salary', '').strip()
+        location = request.form.get('location', '').strip()
+        category = request.form.get('category', '').strip()
+        company = user.company or user.username
+
+        if not title or not description:
+            return redirect(url_for('post_job', msg="Title and description required", type='error'))
+
+        job = Job(
+            title=title,
+            description=description,
+            salary=salary,
+            location=location,
+            category=category,
+            company=company,
+            posted_by=user.id
+        )
+        db.session.add(job)
+        db.session.commit()
+        return redirect(url_for('index', msg="Job posted successfully", type='success'))
+
+    return render_template('post_job.html', user=current_user())
+
+
+#APPROVE EMPLOYER
+def admin_required(f):
+    from functools import wraps
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        user = current_user()
+        if not user or not user.is_admin:
+            return redirect(url_for('index', msg="Admin access required", type='error'))
+        return f(*args, **kwargs)
+    return decorated_function
+
+#ADMIN DASHBOARD ROUTE
+@app.route('/admin')
+@admin_required
+def admin_dashboard():
+    employers = User.query.filter_by(is_employer=True).all()
+    return render_template('admin.html', employers=employers, user=current_user())
+
+#APPROVE AND REVOKE ROUTE
+@app.route('/approve/<int:user_id>')
+@admin_required
+def approve_employer(user_id):
+    employer = User.query.get_or_404(user_id)
+    if employer.is_employer:
+        employer.is_approved = True
+        db.session.commit()
+        return redirect(url_for('admin_dashboard', msg="Employer approved", type='success'))
+    return redirect(url_for('admin_dashboard', msg="Invalid action", type='error'))
+
+@app.route('/revoke/<int:user_id>')
+@admin_required
+def revoke_employer(user_id):
+    employer = User.query.get_or_404(user_id)
+    if employer.is_employer:
+        employer.is_approved = False
+        db.session.commit()
+        return redirect(url_for('admin_dashboard', msg="Employer revoked", type='info'))
+    return redirect(url_for('admin_dashboard', msg="Invalid action", type='error'))
+
+
+
+
+
+
+
+
+if __name__ == "__main__":
+    with app.app_context():
+        db.create_all()
+    with app.app_context():
+        create_admin()
+        print("Database created successfully")
+    app.run(debug=True)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title or "Job Portal" }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}">
+    {% block head %}{% endblock %}
+</head>
+
+<body>
+
+    <header class="site-header">
+        <div class="container nav">
+            <h2 class="logo">JobPortal</h2>
+            <nav>
+                <ul>
+                    <li><a href="{{ url_for('index') }}">Home</a></li>
+
+                    {% if user %}
+                    {% if user.is_admin %}
+                    <li><a href="{{ url_for('admin_dashboard') }}">Admin Dashboard</a></li>
+                    {% elif user.is_employer and user.is_approved %}
+                    <li><a href="{{ url_for('post_job') }}">Post Job</a></li>
+                    <li><a href="{{ url_for('view_applications') }}">Applications</a></li>
+                    {% endif %}
+                    <li><a href="{{ url_for('logout') }}">Logout</a></li>
+                    {% else %}
+                    <li><a href="{{ url_for('login') }}">Login</a></li>
+                    <li><a href="{{ url_for('register') }}">Register</a></li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <div id="alert-container">
+        <main class="content">
+            {% block content %}{% endblock %}
+        </main>
+    </div>
+
+    <footer class="site-footer">
+        <p>&copy; {{ current_year or 2025 }} JobPortal. All rights reserved.</p>
+    </footer>
+
+    <script src="{{ url_for('static', filename='js/base.js') }}"></script>
+    {% block scripts %}{% endblock %}
+</body>
+
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title or "Job Portal" }}</title>
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}">
+    {% block head %}{% endblock %}
+</head>
+
+<body>
+
+    <header class="site-header bg-light py-3 shadow-sm">
+        <div class="container d-flex justify-content-between align-items-center">
+            <h2 class="logo">JobPortal</h2>
+            <nav>
+                <ul class="nav">
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('index') }}">Home</a></li>
+                    {% if user %}
+                    {% if user.is_admin %}
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('admin_dashboard') }}">Admin Dashboard</a>
+                    </li>
+                    {% elif user.is_employer and user.is_approved %}
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('post_job') }}">Post Job</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('view_applications') }}">Applications</a>
+                    </li>
+                    {% endif %}
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('logout') }}">Logout</a></li>
+                    {% else %}
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('login') }}">Login</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('register') }}">Register</a></li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <main class="content container my-5">
+        <!-- Bootstrap Alerts for flash messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        {% for category, message in messages %}
+        <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        {% endfor %}
+        {% endif %}
+        {% endwith %}
+
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer class="site-footer bg-light py-3 mt-auto text-center">
+        <p>&copy; {{ current_year or 2025 }} JobPortal. All rights reserved.</p>
+    </footer>
+
+    <!-- Bootstrap JS (with Popper) -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{{ url_for('static', filename='js/base.js') }}"></script>
+    {% block scripts %}{% endblock %}
+</body>
+
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title or "Job Portal" }}</title>
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}">
+    {% block head %}{% endblock %}
+</head>
+
+<body class="d-flex flex-column min-vh-100">
+
+    <!-- Header / Navbar -->
+    <header class="site-header bg-light py-3 shadow-sm">
+        <div class="container d-flex justify-content-between align-items-center">
+            <h2 class="logo">JobPortal</h2>
+            <nav>
+                <ul class="nav">
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('index') }}">Home</a></li>
+                    {% if user %}
+                    {% if not user.is_employer %}
+                    <!-- Show only to job seekers -->
+                    <li><a href="{{ url_for('my_applications') }}">My Applications</a></li>
+                    {% endif %}
+                    {% if user %}
+                    {% if user.is_admin %}
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('admin_dashboard') }}">Admin Dashboard</a>
+                    </li>
+                    {% elif user.is_employer and user.is_approved %}
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('post_job') }}">Post Job</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('view_applications') }}">Applications</a>
+                    </li>
+                    {% endif %}
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('logout') }}">Logout</a></li>
+                    {% else %}
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('login') }}">Login</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('register') }}">Register</a></li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="content container my-5 flex-grow-1">
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        {% for category, message in messages %}
+        <div class="alert alert-{{ category }} fade show" role="alert">
+            {{ message }}
+        </div>
+        {% endfor %}
+        {% endif %}
+        {% endwith %}
+
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="site-footer bg-light py-3 text-center mt-auto">
+        <p>&copy; {{ current_year or 2025 }} JobPortal. All rights reserved.</p>
+    </footer>
+
+    <!-- Bootstrap JS (with Popper) -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Auto-remove alerts after 3 seconds -->
+    <script>
+        window.addEventListener("DOMContentLoaded", () => {
+            const alerts = document.querySelectorAll(".alert");
+            alerts.forEach(alert => {
+                setTimeout(() => alert.remove(), 3000);
+            });
+        });
+    </script>
+
+    <script src="{{ url_for('static', filename='js/base.js') }}"></script>
+    {% block scripts %}{% endblock %}
+</body>
+
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+from flask import Flask, render_template, redirect, request, url_for, session,flash
+from flask_sqlalchemy import SQLAlchemy
+from werkzeug.security import generate_password_hash, check_password_hash
+from datetime import datetime
+from flask_login import LoginManager, login_user, logout_user, login_required, current_user, UserMixin
+
+
+
+
+app = Flask(__name__)
+app.config.from_object('config')
+app.secret_key = "1d56fb58fbce866d1c07ff3a9a113adb"
+
+login_manager = LoginManager()
+login_manager.init_app(app)
+login_manager.login_view = 'login'
+
+@app.context_processor
+def inject_user():
+    return dict(user=current_user)
+
+# User loader
+@login_manager.user_loader
+def load_user(user_id):
+    return User.query.get(int(user_id))
+
+db = SQLAlchemy(app)
+
+# MODELS
+class User(db.Model, UserMixin):
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(100), nullable=False, unique=True)
+    email = db.Column(db.String(120), nullable=False, unique=True)
+    password = db.Column(db.String(200), nullable=False)
+    is_employer = db.Column(db.Boolean, default=False)
+    is_admin = db.Column(db.Boolean, default=False)
+    is_approved = db.Column(db.Boolean, default=False)
+    date_created = db.Column(db.DateTime, default=datetime.utcnow)
+
+class Job(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(200), nullable=False)
+    description = db.Column(db.Text, nullable=False)
+    salary = db.Column(db.String(100))
+    location = db.Column(db.String(200))
+    category = db.Column(db.String(100))
+    company = db.Column(db.String(200))
+    posted_by = db.Column(db.Integer, db.ForeignKey('user.id'))
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    applications = db.relationship('Application', back_populates='job', lazy=True)
+
+class Application(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    job_id = db.Column(db.Integer, db.ForeignKey('job.id'), nullable=False)
+    cover_letter = db.Column(db.Text)
+    applied_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    user = db.relationship('User', backref='applications', lazy=True)
+    job = db.relationship('Job', back_populates='applications')
+   
+
+
+# CURRENT USER HELPER
+def get_current_user():
+    if 'user_id' in session:
+        return User.query.get(session['user_id'])
+    return None
+
+# ADMIN REQUIRED DECORATOR
+def admin_required(f):
+    from functools import wraps
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        user = current_user()
+        if not user or not user.is_admin:
+            return redirect(url_for('index', msg="Admin access required", type='error'))
+        return f(*args, **kwargs)
+    return decorated_function
+
+def login_required(f):
+    from functools import wraps
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if not current_user.is_authenticated:
+            return redirect(url_for('login', msg="Login required", type='error'))
+        return f(*args, **kwargs)
+    return decorated_function
+
+# CREATE DEFAULT ADMIN (runs once at startup)
+def create_admin():
+    admin_email = 'admin@jobportal.com'
+    if not User.query.filter_by(email=admin_email).first():
+        admin = User(
+            username='admin',
+            email=admin_email,
+            is_admin=True,
+            is_approved=True
+        )
+        admin.password = generate_password_hash('admin123')
+        db.session.add(admin)
+        db.session.commit()
+        print("Admin account created.")
+
+# ROUTES
+@app.route('/', methods=['GET', 'POST'])
+def index():
+    query = Job.query.order_by(Job.created_at.desc())
+
+    # Get search/filter values
+    location = request.args.get('location', '').strip()
+    category = request.args.get('category', '').strip()
+    company = request.args.get('company', '').strip()
+
+    jobs = query.all()
+    return render_template('index.html', user=current_user, jobs=jobs, location=location, category=category, company=company)
+
+
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    if request.method == 'POST':
+        username = request.form.get('username', '').strip()
+        email = request.form.get('email', '').strip().lower()
+        password = request.form.get('password', '').strip()
+        is_employer = request.form.get('is_employer') == 'on'
+        company = request.form.get('company', '').strip() if is_employer else None
+
+        if not username or not email or not password:
+            return redirect(url_for('register', msg="Fill all required fields", type='error'))
+
+        if User.query.filter((User.username==username)|(User.email==email)).first():
+            return redirect(url_for('register', msg="Username or email already exists", type='error'))
+
+        user = User(
+            username=username,
+            email=email,
+            is_employer=is_employer,
+            company=company
+        )
+        user.password = generate_password_hash(password)
+
+        if not is_employer:
+            user.is_approved = True  # job seekers auto-approved
+
+        db.session.add(user)
+        db.session.commit()
+
+        return redirect(url_for('login', msg="Registered successfully", type='success'))
+
+    return render_template('register.html', user=current_user)
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        email = request.form.get('email', '').strip().lower()
+        password = request.form.get('password', '').strip()
+        user = User.query.filter_by(email=email).first()
+
+        if not user or not check_password_hash(user.password, password):
+            return redirect(url_for('login', msg="Invalid credentials", type='error'))
+
+        login_user(user)
+
+        if user.is_admin:
+            return redirect(url_for('admin_dashboard'))
+        elif user.is_employer:
+            if user.is_approved:
+                return redirect(url_for('post_job'))
+            else:
+                return redirect(url_for('index', msg="Your employer account is not approved yet", type='info'))
+        else:
+            return redirect(url_for('index', msg="Logged in successfully", type='success'))
+
+    return render_template('login.html', user=current_user)
+
+
+@app.route('/logout')
+@login_required
+def logout():
+    logout_user()
+    return redirect(url_for('index', msg="Logged out successfully", type='info'))
+
+
+# POST JOB
+@app.route('/post-job', methods=['GET', 'POST'])
+def post_job():
+    user = current_user()
+    if not user:
+        return redirect(url_for('login', msg="Login first", type='error'))
+    if not user.is_employer:
+        return redirect(url_for('index', msg="Only employers can post jobs", type='error'))
+    if not user.is_approved:
+        return redirect(url_for('index', msg="Your employer account is not approved yet", type='error'))
+
+    if request.method == 'POST':
+        title = request.form.get('title', '').strip()
+        description = request.form.get('description', '').strip()
+        salary = request.form.get('salary', '').strip()
+        location = request.form.get('location', '').strip()
+        category = request.form.get('category', '').strip()
+        company = user.company or user.username
+
+        if not title or not description:
+            return redirect(url_for('post_job', msg="Title and description required", type='error'))
+
+        job = Job(
+            title=title,
+            description=description,
+            salary=salary,
+            location=location,
+            category=category,
+            company=company,
+            posted_by=user.id
+        )
+        db.session.add(job)
+        db.session.commit()
+        return redirect(url_for('index', msg="Job posted successfully", type='success'))
+
+    return render_template('post_job.html', user=current_user)
+
+#APPLY JOB ROUTE
+@app.route('/apply/<int:job_id>', methods=['GET', 'POST'])
+def apply_job(job_id):
+    user = current_user()
+    if not user:
+        return redirect(url_for('login', msg="Login first to apply", type='error'))
+
+    if user.is_employer:
+        return redirect(url_for('index', msg="Employers cannot apply for jobs", type='error'))
+
+    job = Job.query.get_or_404(job_id)
+
+    # Check if already applied
+    existing_application = Application.query.filter_by(user_id=user.id, job_id=job.id).first()
+    if existing_application:
+        return redirect(url_for('index', msg="You have already applied for this job", type='info'))
+
+    if request.method == 'POST':
+        cover_letter = request.form.get('cover_letter', '').strip()
+        application = Application(
+            user_id=user.id,
+            job_id=job.id,
+            cover_letter=cover_letter
+        )
+        db.session.add(application)
+        db.session.commit()
+        return redirect(url_for('index', msg="Applied successfully", type='success'))
+
+    return render_template('apply_job.html', job=job, user=user)
+
+#JOB SEEKER APPLIED HISTORY
+@app.route('/my-applications')
+@login_required
+def my_applications():
+    user = current_user
+    applications = Application.query.filter_by(user_id=user.id).all()
+    return render_template('my_applications.html', applications=applications, user=user)
+
+
+#Employer view application
+@app.route('/applications')
+def view_applications():
+    user = current_user()
+    if not user:
+        return redirect(url_for('login', msg="Login first", type='error'))
+    
+    if not user.is_employer or not user.is_approved:
+        return redirect(url_for('index', msg="Only approved employers can view applications", type='error'))
+
+    # Get all jobs posted by this employer
+    jobs = Job.query.filter_by(posted_by=user.id).all()
+    job_ids = [job.id for job in jobs]
+
+    # Get applications for these jobs
+    applications = Application.query.filter(Application.job_id.in_(job_ids)).all()
+
+    return render_template('applications.html', user=user, applications=applications, jobs=jobs)
+
+# ADMIN DASHBOARD
+# @app.route('/admin')
+# @admin_required
+# def admin_dashboard():
+#     employers = User.query.filter_by(is_employer=True).all()
+#     return render_template('admin.html', employers=employers, user=current_user())
+
+#ADMIN DASHBOARD 
+@app.route('/admin_dashboard')
+def admin_dashboard():
+    if not current_user.is_authenticated or not getattr(current_user, 'is_admin', False):
+        flash("Access denied. Admins only.", "danger")
+        return redirect(url_for('login'))
+
+    employers = User.query.filter_by(is_employer=True).all()
+    jobs = Job.query.all()
+    applications = Application.query.all()
+
+    return render_template('admin.html', employers=employers, jobs=jobs, applications=applications)
+
+
+
+# APPROVE/REVOKE EMPLOYER
+@app.route('/approve/<int:user_id>')
+@admin_required
+def approve_employer(user_id):
+    employer = User.query.get_or_404(user_id)
+    if employer.is_employer:
+        employer.is_approved = True
+        db.session.commit()
+        return redirect(url_for('admin_dashboard', msg="Employer approved", type='success'))
+    return redirect(url_for('admin_dashboard', msg="Invalid action", type='error'))
+
+@app.route('/revoke/<int:user_id>')
+@admin_required
+def revoke_employer(user_id):
+    employer = User.query.get_or_404(user_id)
+    if employer.is_employer:
+        employer.is_approved = False
+        db.session.commit()
+        return redirect(url_for('admin_dashboard', msg="Employer revoked", type='info'))
+    return redirect(url_for('admin_dashboard', msg="Invalid action", type='error'))
+
+
+if __name__ == "__main__":
+    with app.app_context():
+        db.create_all()
+        create_admin()
+        print("Database created successfully")
+    app.run(debug=True)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title or "Job Portal" }}</title>
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}">
+    {% block head %}{% endblock %}
+</head>
+
+<body class="d-flex flex-column min-vh-100">
+
+    <!-- Header / Navbar -->
+    <header class="site-header bg-light py-3 shadow-sm">
+        <div class="container d-flex justify-content-between align-items-center">
+            <h2 class="logo">JobPortal</h2>
+            <nav>
+                <ul class="nav">
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('index') }}">Home</a></li>
+                    {% if user.is_authenticated %}
+                    {% if not user.is_employer %}
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('my_applications') }}">My
+                            Applications</a></li>
+                    {% endif %}
+
+                    {% if user.is_admin %}
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('admin_dashboard') }}">Admin
+                            Dashboard</a></li>
+                    {% elif user.is_employer and user.is_approved %}
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('post_job') }}">Post Job</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('view_applications') }}">Applications</a>
+                    </li>
+                    {% endif %}
+
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('logout') }}">Logout</a></li>
+                    {% else %}
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('login') }}">Login</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('register') }}">Register</a></li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="content container my-5 flex-grow-1">
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        {% for category, message in messages %}
+        <div class="alert alert-{{ category }} fade show" role="alert">
+            {{ message }}
+        </div>
+        {% endfor %}
+        {% endif %}
+        {% endwith %}
+
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="site-footer bg-dark py-3 text-center mt-auto">
+        <p>&copy; {{ current_year or 2025 }} JobPortal. All rights reserved.</p>
+    </footer>
+
+    <!-- Bootstrap JS (with Popper) -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Auto-remove alerts after 3 seconds -->
+    <script>
+        window.addEventListener("DOMContentLoaded", () => {
+            const alerts = document.querySelectorAll(".alert");
+            alerts.forEach(alert => {
+                setTimeout(() => alert.remove(), 3000);
+            });
+        });
+    </script>
+
+    <script src="{{ url_for('static', filename='js/base.js') }}"></script>
+    {% block scripts %}{% endblock %}
+</body>
+
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ <!-- Job Management Section -->
+    <h3>Jobs Management</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>Job Title</th>
+                <th>Company</th>
+                <th>Posted By</th>
+                <th>Status</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for job in jobs %}
+            <tr>
+                <td>{{ job.title }}</td>
+                <td>{{ job.company }}</td>
+                <td>{{ job.employer.username }}</td>
+                <td>{{ job.status }}</td>
+                <td>
+                    {% if job.status == 'Active' %}
+                    <a href="{{ url_for('change_job_status', job_id=job.id, new_status='Closed') }}">Close</a>
+                    {% else %}
+                    <a href="{{ url_for('change_job_status', job_id=job.id, new_status='Active') }}">Activate</a>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <hr>
+
+    <!-- Applications Overview Section -->
+    <h3>All Applications</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>Job Title</th>
+                <th>Applicant</th>
+                <th>Email</th>
+                <th>Status</th>
+                <th>Applied On</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for app in applications %}
+            <tr>
+                <td>{{ app.job.title }}</td>
+                <td>{{ app.job_seeker.username }}</td>
+                <td>{{ app.job_seeker.email }}</td>
+                <td>{{ app.status }}</td>
+                <td>{{ app.applied_on.strftime('%Y-%m-%d') }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

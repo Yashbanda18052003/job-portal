@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h2>Available Jobs</h2>
+<!-- Inside the <head> tag -->
+<link rel="stylesheet" href="{{ url_for('static', filename='css/index.css') }}">
+
+<!-- Search & Filter Form -->
+<form method="GET" action="{{ url_for('index') }}" class="job-filter-form">
+    <select name="category">
+        <option value="">All Categories</option>
+        {% set categories = jobs|map(attribute='category')|unique %}
+        {% for cat in categories %}
+        <option value="{{ cat }}" {% if cat==category %}selected{% endif %}>{{ cat }}</option>
+        {% endfor %}
+    </select>
+
+    <input type="text" name="location" placeholder="Location" value="{{ location or '' }}">
+    <input type="text" name="company" placeholder="Company" value="{{ company or '' }}">
+    <input type="number" name="min_salary" placeholder="Min Salary" value="{{ min_salary or '' }}">
+    <input type="number" name="max_salary" placeholder="Max Salary" value="{{ max_salary or '' }}">
+
+    <button type="submit" class="btn-search">Search / Filter</button>
+</form>
+
+<!-- Jobs Listing -->
+<div class="jobs-container">
+    {% if jobs %}
+    {% for job in jobs %}
+    <div class="job-card">
+        <h3>{{ job.title }}</h3>
+        <p><strong>Company:</strong> {{ job.company }}</p>
+        <p><strong>Location:</strong> {{ job.location }}</p>
+        <p><strong>Salary:</strong> {{ job.salary or 'Not specified' }}</p>
+        <p>{{ job.description[:150] }}{% if job.description|length > 150 %}...{% endif %}</p>
+
+        {% if user and not user.is_employer %}
+        <a href="{{ url_for('apply_job', job_id=job.id) }}" class="btn-apply">Apply Now</a>
+        {% endif %}
+    </div>
+    {% endfor %}
+    {% else %}
+    <p>No jobs available at the moment.</p>
+    {% endif %}
+</div>
+{% endblock %}

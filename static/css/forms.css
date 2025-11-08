@@ -1,0 +1,150 @@
+/* =========================================
+   Global Styles
+   ========================================= */
+
+/* These styles won't conflict with your navbar */
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background-color: #f0f2f5;
+    /* Light gray page background */
+    margin: 0;
+    padding: 0;
+}
+
+/* =========================================
+   Form Container Styles
+   ========================================= */
+
+.form-container {
+    /* This container is now transparent */
+    /* It just controls width and centering */
+    width: 100%;
+    max-width: 450px;
+    box-sizing: border-box;
+
+    /* Adds spacing from navbar (top) and centers horizontally */
+    margin: 2rem auto;
+    padding: 0 1rem;
+    /* Adds side padding for small screens */
+}
+
+/* =========================================
+   Typography
+   ========================================= */
+
+.form-container h2 {
+    text-align: center;
+    color: #333;
+    margin: 0 0 1.5rem 0;
+    font-size: 1.8rem;
+    font-weight: 600;
+}
+
+/* =========================================
+   Form Elements (Inputs)
+   ========================================= */
+
+.form-container input[type="text"],
+.form-container input[type="email"],
+.form-container input[type="password"] {
+    width: 100%;
+    padding: 14px;
+    margin-bottom: 1rem;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    box-sizing: border-box;
+    font-size: 1rem;
+    transition: border-color 0.3s, box-shadow 0.3s;
+
+    /* Inputs themselves are white, as is standard */
+    background-color: #ffffff;
+}
+
+/* --- Focus State (User-Friendly) --- */
+.form-container input[type="text"],
+.form-container input[type="email"],
+.form-container input[type="password"] {
+    width: 100%;
+    padding: 14px;
+    margin-bottom: 1rem;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    box-sizing: border-box;
+    font-size: 1rem;
+    background-color: #ffffff;
+
+    /* --- Updated Transition --- */
+    transition:
+        border-color 0.3s,
+        box-shadow 0.3s,
+        opacity 0.3s ease-out,
+        max-height 0.3s ease-out,
+        margin 0.3s ease-out,
+        padding 0.3s ease-out;
+
+    /* --- Added for smooth animation --- */
+    overflow: hidden;
+    max-height: 100px;
+    /* (padding + line-height) */
+    opacity: 1;
+}
+
+/* --- Placeholder Style --- */
+::placeholder {
+    color: #999;
+}
+
+/* =========================================
+   Checkbox and Label
+   ========================================= */
+
+.form-container label {
+    display: flex;
+    align-items: center;
+    margin-bottom: 1rem;
+    font-size: 0.9rem;
+    color: #555;
+    cursor: pointer;
+}
+
+.form-container input[type="checkbox"] {
+    margin-right: 10px;
+    accent-color: #007bff;
+    transform: scale(1.1);
+}
+
+/* =========================================
+   Submit Button
+   ========================================= */
+
+.form-container button[type="submit"] {
+    width: 100%;
+    padding: 14px;
+    background-color: #007bff;
+    /* Professional blue */
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 1.1rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s;
+    margin-top: 0.5rem;
+}
+
+.form-container button[type="submit"]:hover {
+    background-color: #0056b3;
+    /* Darker blue on hover */
+    transform: translateY(-2px);
+    /* Slight lift */
+}
+
+#company-field[style*="display: none"] {
+    max-height: 0;
+    opacity: 0;
+    margin-bottom: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+    border-width: 0;
+    /* Optional: hide border too */
+}

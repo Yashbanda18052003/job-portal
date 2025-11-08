@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>My Applications</h2>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/application.css') }}">
+
+{% if applications %}
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Job Title</th>
+            <th>Company</th>
+            <th>Applied At</th>
+            <th>Resume</th>
+            <th>Status</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for app in applications %}
+        <tr>
+            <td>{{ app.job.title }}</td>
+            <td>{{ app.job.company }}</td>
+            <td>{{ app.applied_on.strftime('%Y-%m-%d %H:%M') }}</td>
+            <td>
+                {% if app.resume %}
+                <a href="{{ url_for('static', filename='uploads/' ~ app.resume) }}" target="_blank">View Resume</a>
+                {% else %}
+                No Resume
+                {% endif %}
+            </td>
+            <td>
+                {% if app.status == 'Accepted' %}
+                <span class="badge bg-success">Accepted</span>
+                {% elif app.status == 'Rejected' %}
+                <span class="badge bg-danger">Rejected</span>
+                {% else %}
+                <span class="badge bg-secondary">Pending</span>
+                {% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<p>You have not applied to any jobs yet.</p>
+{% endif %}
+{% endblock %}

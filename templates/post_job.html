@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/forms.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="form-container">
+    <h2>Post a Job</h2>
+    <form method="POST">
+        <input type="text" name="title" placeholder="Job Title" required><br>
+        <textarea name="description" placeholder="Job Description" rows="5" required></textarea><br>
+        <input type="text" name="salary" placeholder="Salary"><br>
+        <input type="text" name="location" placeholder="Location"><br>
+        <input type="text" name="category" placeholder="Category"><br>
+        <button type="submit">Post Job</button>
+    </form>
+</div>
+{% endblock %}
+

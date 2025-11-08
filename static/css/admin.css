@@ -1,0 +1,96 @@
+/* Styles for the admin dashboard table */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1.5rem;
+    background-color: #ffffff;
+    border-radius: 8px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+    overflow: hidden;
+    /* For rounded corners */
+}
+
+thead tr {
+    background-color: #f4f6f8;
+    border-bottom: 2px solid #ddd;
+}
+
+th {
+    padding: 12px 15px;
+    text-align: left;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #555;
+    text-transform: uppercase;
+}
+
+tbody tr {
+    border-bottom: 1px solid #f0f0f0;
+}
+
+tbody tr:last-child {
+    border-bottom: none;
+}
+
+tbody tr:hover {
+    background-color: #f9f9f9;
+}
+
+td {
+    padding: 12px 15px;
+    vertical-align: middle;
+    color: #333;
+}
+
+/* --- Action Links --- */
+td a {
+    color: #007bff;
+    text-decoration: none;
+    font-weight: 500;
+    padding: 4px 8px;
+    border-radius: 4px;
+    transition: background-color 0.3s, color 0.3s;
+}
+
+td a:hover {
+    background-color: #e6f2ff;
+}
+
+/* Example: Style "Revoke" link differently */
+td a[href*="revoke"] {
+    color: #dc3545;
+    /* Red */
+}
+
+td a[href*="revoke"]:hover {
+    background-color: #fbebed;
+}
+
+td {
+    padding: 8px;
+}
+
+td a {
+    margin-right: 8px;
+    text-decoration: none;
+}
+
+td a:hover {
+    text-decoration: underline;
+}
+
+td.status {
+    font-weight: bold;
+}
+
+.status-under-review {
+    color: orange;
+}
+
+.status-accepted {
+    color: green;
+}
+
+.status-rejected {
+    color: red;
+}

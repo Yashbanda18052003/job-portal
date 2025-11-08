@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h2>Apply for: {{ job.title }}</h2>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/application.css') }}">
+
+<p><strong>Company:</strong> {{ job.company }}</p>
+<p><strong>Location:</strong> {{ job.location }}</p>
+<p>{{ job.description }}</p>
+
+<form method="POST" enctype="multipart/form-data">
+    <label for="resume">Upload Resume (PDF only):</label><br>
+    <input type="file" name="resume" accept=".pdf" required><br><br>
+    <button type="submit" class="btn-submit">Submit Application</button>
+</form>
+{% endblock %}

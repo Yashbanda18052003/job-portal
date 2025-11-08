@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h2>Job Applications</h2>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/application.css') }}">
+
+{% if applications %}
+{% for app in applications %}
+<div class="application-card">
+    <h3>Job: {{ app.job.title }}</h3>
+    <p><strong>Applicant:</strong> {{ app.user.username }} ({{ app.user.email }})</p>
+    <p><strong>Applied At:</strong> {{ app.applied_at.strftime('%d %b %Y %H:%M') }}</p>
+    <p><strong>Cover Letter:</strong> {{ app.cover_letter or 'No cover letter provided' }}</p>
+</div>
+{% endfor %}
+{% else %}
+<p>No applications received yet.</p>
+{% endif %}
+
+{% endblock %}

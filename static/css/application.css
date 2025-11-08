@@ -1,0 +1,44 @@
+/* Container for the page */
+.applications-container {
+    max-width: 800px;
+    margin: 2rem auto;
+    padding: 0 1rem;
+}
+
+.applications-container h2 {
+    text-align: center;
+    color: #333;
+    margin-bottom: 2rem;
+}
+
+/* Styles for each application card */
+.application-card {
+    background-color: #ffffff;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    padding: 1.5rem 2rem;
+    margin-bottom: 1.5rem;
+    transition: box-shadow 0.3s, transform 0.3s;
+}
+
+.application-card:hover {
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+    transform: translateY(-3px);
+}
+
+.application-card h3 {
+    margin: 0 0 0.75rem 0;
+    color: #007bff;
+}
+
+.application-card p {
+    margin: 0.5rem 0;
+    color: #555;
+    line-height: 1.6;
+}
+
+.application-card p strong {
+    color: #333;
+    min-width: 100px;
+    display: inline-block;
+}

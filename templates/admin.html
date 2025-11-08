@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="form-container">
+    <h2>Admin Dashboard</h2>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+
+    <!-- Employer Approval Section -->
+    <h3>Employers</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>Username</th>
+                <th>Email</th>
+                <th>Company</th>
+                <th>Approved</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for emp in employers %}
+            <tr>
+                <td>{{ emp.username }}</td>
+                <td>{{ emp.email }}</td>
+                <td>{{ emp.company or "-" }}</td>
+                <td>{{ "Yes" if emp.is_approved else "No" }}</td>
+                <td>
+                    {% if not emp.is_approved %}
+                    <a href="{{ url_for('approve_employer', user_id=emp.id) }}">Approve</a>
+                    {% else %}
+                    <a href="{{ url_for('revoke_employer', user_id=emp.id) }}">Revoke</a>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <hr>
+
+    <!-- Job Management Section -->
+    <h3>Jobs Management</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>Job Title</th>
+                <th>Company</th>
+                <th>Posted By</th>
+                <th>Status</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for job in jobs %}
+            <tr>
+                <td>{{ job.title }}</td>
+                <td>{{ job.company or "-" }}</td>
+                <td>
+                    {% if job.employer %}
+                    {{ job.employer.username }}
+                    {% else %}
+                    -
+                    {% endif %}
+                </td>
+                <td>{{ job.status }}</td>
+                <td>
+                    {% if job.status == 'Active' %}
+                    <a href="{{ url_for('change_job_status', job_id=job.id, new_status='Closed') }}">Close</a>
+                    {% else %}
+                    <a href="{{ url_for('change_job_status', job_id=job.id, new_status='Active') }}">Activate</a>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <hr>
+
+    <!-- Applications Overview Section -->
+    <h3>All Applications</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>Job Title</th>
+                <th>Applicant</th>
+                <th>Email</th>
+                <th>Resume</th>
+                <th>Status</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for app in applications %}
+            <tr>
+                <td>{{ app.job.title if app.job else '-' }}</td>
+                <td>{{ app.job_seeker.username if app.job_seeker else '-' }}</td>
+                <td>{{ app.job_seeker.email if app.job_seeker else '-' }}</td>
+                <td>
+                    {% if app.resume %}
+                    <a href="{{ url_for('uploaded_file', filename=app.resume) }}" target="_blank">View Resume</a>
+                    {% else %}
+                    -
+                    {% endif %}
+                </td>
+                <td>{{ app.status }}</td>
+                <td>
+                    <a href="{{ url_for('change_application_status', app_id=app.id, new_status='Under Review') }}">Under
+                        Review</a> |
+                    <a
+                        href="{{ url_for('change_application_status', app_id=app.id, new_status='Accepted') }}">Accept</a>
+                    |
+                    <a
+                        href="{{ url_for('change_application_status', app_id=app.id, new_status='Rejected') }}">Reject</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}
