@@ -52,4 +52,11 @@ Others: Werkzeug Security, File Uploads
 pip install -r requirements.txt
 python app.py
 
-![Home Page](assets/screenshots/home page-job portal.png)
+![Home Page](assets/screenshots/Home page-job portal.png)
+![Register Page](assets/screenshots/Register page-job portal.png)
+![Login Page](assets/screenshots/Login page-job portal.png)
+![User application view Page](assets/screenshots/User application view page-job portal.png)
+![Employer application view Page](assets/screenshots/Employer application view page-job portal.png)
+![Admin Page](assets/screenshots/Admin page-job portal.png)
+![Add job Page](assets/screenshots/Add job page-job portal.png)
+
