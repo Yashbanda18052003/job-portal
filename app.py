@@ -71,7 +71,9 @@ class Job(db.Model):
     posted_by = db.Column(db.Integer, db.ForeignKey('user.id'))
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     applications = db.relationship('Application', back_populates='job', lazy=True)
-    employer = db.relationship('User', backref='jobs', lazy=True)
+    # employer = db.relationship('User', backref='jobs', lazy=True)
+    applications = db.relationship('Application', back_populates='job', lazy=True)
+
 
 
 class Application(db.Model):
@@ -85,7 +87,7 @@ class Application(db.Model):
 
     # user = db.relationship('User', backref='applications', lazy=True)
     job = db.relationship('Job', back_populates='applications')
-    job_seeker = db.relationship('User', backref='applications', lazy=True)
+    user = db.relationship('User', backref='applications') 
     
 
 
@@ -121,6 +123,11 @@ def create_admin():
 def index():
     jobs = Job.query.order_by(Job.created_at.desc()).all()
     return render_template('index.html', user=current_user, jobs=jobs)
+
+@app.route('/resume/<path:filename>')
+@login_required
+def resume_file(filename):
+    return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
 
 
 @app.route('/register', methods=['GET', 'POST'])
@@ -161,24 +168,26 @@ def login():
     if request.method == 'POST':
         email = request.form.get('email', '').strip().lower()
         password = request.form.get('password', '').strip()
+
         user = User.query.filter_by(email=email).first()
 
         if not user or not check_password_hash(user.password, password):
-            return redirect(url_for('login', msg="Invalid credentials", type='error'))
+            return redirect(url_for('login', msg="Invalid credentials", type='danger'))
 
         login_user(user)
 
         if user.is_admin:
             return redirect(url_for('admin_dashboard'))
-        elif user.is_employer:
+
+        if user.is_employer:
             if user.is_approved:
                 return redirect(url_for('post_job'))
-            else:
-                return redirect(url_for('index', msg="Your employer account is not approved yet", type='info'))
-        else:
-            return redirect(url_for('index', msg="Logged in successfully", type='success'))
+            return redirect(url_for('index', msg="Your employer account is not approved yet", type='info'))
 
-    return render_template('login.html', user=current_user)
+        return redirect(url_for('index', msg="Logged in successfully", type='success'))
+
+    return render_template('login.html')
+
 
 
 @app.route('/logout')
@@ -229,6 +238,10 @@ def post_job():
 def apply_job(job_id):
     job = Job.query.get_or_404(job_id)
 
+    if current_user.is_admin:
+        flash("Admins cannot apply for jobs.", "danger")
+        return redirect(url_for('index'))
+
     # Check if the current user has already applied for this job
     existing_application = Application.query.filter_by(
         user_id=current_user.id, job_id=job.id
@@ -250,25 +263,25 @@ def apply_job(job_id):
             return redirect(request.url)
 
         if file and allowed_file(file.filename):
-            filename = secure_filename(file.filename)
-            filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-            file.save(filepath)
+         filename = secure_filename(file.filename)
+         filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+         file.save(filepath)
 
-            new_application = Application(
-                user_id=current_user.id,
-                job_id=job.id,
-                resume=filename  # save only filename, not full path
-            )
-            db.session.add(new_application)
-            db.session.commit()
+         new_application = Application(
+         user_id=current_user.id,
+         job_id=job.id,
+         resume=filename  # only filename
+        )
+        db.session.add(new_application)
+        db.session.commit()
 
-            flash('Application submitted successfully!', 'success')
-            return redirect(url_for('my_applications'))
-        else:
-            flash('Invalid file type. Please upload a PDF.', 'danger')
+        flash('Application submitted successfully!', 'success')
+        return redirect(url_for('my_applications'))
+    else:
+     flash('Invalid file type. Please upload a PDF.', 'danger')
+
 
     return render_template('apply_job.html', job=job)
-
 
 
 @app.route('/my-applications')
@@ -293,35 +306,57 @@ def view_applications():
     return render_template('applications.html', user=user, applications=applications, jobs=jobs)
 
 
-@app.route('/admin_dashboard')
-@admin_required
+@app.route('/admin')
+@login_required
 def admin_dashboard():
+    if not current_user.is_admin:
+        return redirect(url_for('index', msg="Unauthorized", type='danger'))
+
     employers = User.query.filter_by(is_employer=True).all()
     jobs = Job.query.all()
     applications = Application.query.all()
-    return render_template('admin.html', employers=employers, jobs=jobs, applications=applications)
 
-@app.route('/change_job_status/<int:job_id>/<string:new_status>')
-@admin_required
+    # FIX: dictionary to map user_id → user
+    users = {u.id: u for u in User.query.all()}
+
+    return render_template(
+        'admin.html',
+        employers=employers,
+        jobs=jobs,
+        applications=applications,
+        users=users
+    )
+
+
+@app.route('/change_job_status/<int:job_id>/<new_status>')
+@login_required
 def change_job_status(job_id, new_status):
-    job = Job.query.get(job_id)
-    if job:
-        job.status = new_status
-        db.session.commit()
-        flash(f'Job status changed to {new_status}.', 'success')
-    else:
-        flash('Job not found.', 'danger')
-    return redirect(url_for('admin_dashboard'))
+    print("ROUTE HIT ---->", job_id, new_status)
+    if not current_user.is_admin:
+        return redirect(url_for('index', msg="Unauthorized", type='danger'))
 
+    job = Job.query.get_or_404(job_id)
 
-@app.route('/admin/change_application_status/<int:app_id>/<string:new_status>')
-@admin_required
-def change_application_status(app_id, new_status):
-    app_record = Application.query.get_or_404(app_id)
-    app_record.status = new_status
+    job.status = new_status
     db.session.commit()
-    flash(f'Application status changed to {new_status}.', 'success')
+
     return redirect(url_for('admin_dashboard'))
+
+
+
+
+@app.route('/change_application_status/<int:app_id>/<new_status>')
+@login_required
+def change_application_status(app_id, new_status):
+    if not current_user.is_admin:
+        return redirect(url_for('index', msg="Unauthorized", type='danger'))
+
+    app = Application.query.get_or_404(app_id)
+    app.status = new_status
+    db.session.commit()
+
+    return redirect(url_for('admin_dashboard', msg="Application updated", type='success'))
+
 
 
 
@@ -346,8 +381,6 @@ def revoke_employer(user_id):
         db.session.commit()
         return redirect(url_for('admin_dashboard', msg="Employer revoked", type='info'))
     return redirect(url_for('admin_dashboard', msg="Invalid action", type='error'))
-
-
 
 # MAIN
 if __name__ == "__main__":

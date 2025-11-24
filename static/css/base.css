@@ -74,6 +74,31 @@ nav ul li a:hover {
     padding: 2rem 0;
 }
 
+/* Fix Bootstrap alert background being overwritten */
+.alert {
+    color: #fff !important;
+    border: none !important;
+}
+
+.alert-danger {
+    background-color: #dc3545 !important;
+}
+
+.alert-success {
+    background-color: #28a745 !important;
+}
+
+.alert-warning {
+    background-color: #ffc107 !important;
+    color: #000 !important;
+}
+
+.alert-info {
+    background-color: #0dcaf0 !important;
+    color: #000 !important;
+}
+
+
 .content {
     background: #fff;
     border-radius: 10px;

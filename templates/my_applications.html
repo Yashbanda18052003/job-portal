@@ -22,7 +22,7 @@
             <td>{{ app.applied_on.strftime('%Y-%m-%d %H:%M') }}</td>
             <td>
                 {% if app.resume %}
-                <a href="{{ url_for('static', filename='uploads/' ~ app.resume) }}" target="_blank">View Resume</a>
+                <a href="{{ url_for('resume_file', filename=app.resume) }}" target="_blank">View Resume</a>
                 {% else %}
                 No Resume
                 {% endif %}
