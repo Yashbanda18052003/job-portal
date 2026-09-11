@@ -1,3 +1,5 @@
-SECRET_KEY = "4da93b49dc9f1c23ff160b50601ad9c0"
-SQLALCHEMY_DATABASE_URI = "sqlite:///jobportal.db"
-SQLALCHEMY_TRACK_MODIFICATION = False
+import os
+
+SECRET_KEY = os.environ.get("SECRET_KEY", "dev_secret_key_change_in_production")
+SQLALCHEMY_DATABASE_URI = os.environ.get("DATABASE_URL", "sqlite:///jobportal.db")
+SQLALCHEMY_TRACK_MODIFICATIONS = False

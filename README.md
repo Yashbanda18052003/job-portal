@@ -1,62 +1,82 @@
-📌 Job Portal Web App
+# Job Portal Web Application
 
-A full-stack job posting and application platform built using Flask.
-The system supports User and Admin roles, job CRUD operations, resume uploads, authentication, and an admin dashboard to manage job listings and applications.
+## Overview
+A web-based recruitment job portal built with Python and Flask. The platform enables job seekers to explore open listings and submit applications with uploaded resumes, while allowing employers and admins to post job openings and review candidate submissions.
 
-🚀 Features
-👤 User
+## Features
+- **User Authentication:** Registration and authentication for Job Seekers and Employers/Admins using password hashing.
+- **Job Postings Management:** Employers can create, update, and manage job listings with location, salary, and qualification requirements.
+- **Application Workflow:** Applicants can apply to open positions and attach PDF resumes.
+- **Applicant Management:** Employers can review candidate profiles, inspect submitted resumes, and track application records.
+- **Admin Panel:** Administrative interface for overseeing job postings and portal users.
 
-Register & login
+## Tech Stack
+- **Backend:** Python, Flask, Flask-SQLAlchemy, Flask-Login
+- **Database:** SQLite (Development) / MySQL compatible
+- **Frontend:** HTML5, CSS3, JavaScript, Bootstrap
 
-View all job openings
+## Project Structure
+```
+job-portal/
+├── app.py              # Application entry point & route definitions
+├── config.py           # Application configurations
+├── requirements.txt    # Python dependencies list
+├── static/             # CSS styling, JS scripts, and uploaded media
+├── templates/          # HTML Jinja2 templates (Job views, Admin panel)
+└── instance/           # Local SQLite instance (Development only)
+```
 
-Apply to jobs
+## Installation
 
-Upload resumes (PDF/DOC)
+1. **Clone the repository:**
+   ```bash
+   git clone https://github.com/Yashbanda18052003/job-portal.git
+   cd job-portal
+   ```
 
-Track applied jobs
+2. **Create and activate a virtual environment:**
+   ```bash
+   python -m venv env
+   # On Windows:
+   env\Scripts\activate
+   # On macOS/Linux:
+   source env/bin/activate
+   ```
 
-🛠 Admin
+3. **Install dependencies:**
+   ```bash
+   pip install -r requirements.txt
+   ```
 
-Login to admin panel
+## Environment Variables
+Create a `.env` file in the root directory:
+```env
+SECRET_KEY=your_random_secret_key
+DATABASE_URL=sqlite:///instance/jobportal.db
+```
 
-Add / Edit / Delete job postings
+## Database Setup
 
-View all applicants
+Initialize database tables automatically on first run via Flask-SQLAlchemy:
+```bash
+python -c "from app import app, db; app.app_context().push(); db.create_all()"
+```
 
-View and download resumes
+## How to Run
 
-Manage application status
-
-🧩 Tech Stack
-
-Backend: Flask, SQLAlchemy
-
-Frontend: HTML, CSS, Bootstrap, Jinja2
-
-Database: SQLite / MySQL
-
-Others: Werkzeug Security, File Uploads
-
-
-
-/project
-│──── /static
-│──── /templates
-│──── app.py
-│──── models.py
-│──── forms.py
-│──── config.py
-
-
-pip install -r requirements.txt
+```bash
 python app.py
+```
+Navigate to `http://127.0.0.1:5000` in your web browser.
 
-![Home Page](assets/screenshots/Home page-job portal.png)
-![Register Page](assets/screenshots/Register page-job portal.png)
-![Login Page](assets/screenshots/Login page-job portal.png)
-![User application view Page](assets/screenshots/User application view page-job portal.png)
-![Employer application view Page](assets/screenshots/Employer application view page-job portal.png)
-![Admin Page](assets/screenshots/Admin page-job portal.png)
-![Add job Page](assets/screenshots/Add job page-job portal.png)
+## Screenshots
+*(Add project screenshots here)*
 
+## Future Improvements
+- Migration of resume storage from local disk to AWS S3 or Cloudinary.
+- Email notifications for applicants when job status changes.
+- Keyword-based search and skill filtering for job listings.
+
+## Author
+**Yash Banda**  
+LinkedIn: [linkedin.com/in/yash-banda-829633259](https://www.linkedin.com/in/yash-banda-829633259/)

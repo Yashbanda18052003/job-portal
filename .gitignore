@@ -1,0 +1,25 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual Environments
+env/
+venv/
+ENV/
+
+# Database
+instance/*.db
+*.sqlite
+
+# Uploaded Files
+static/resumes/*
+!.gitkeep
+
+# Environment Files
+.env
+
+# Text/scratchpad files
+css.txt
+text.txt
+project_structure.txt
