@@ -61,17 +61,10 @@ A recruitment and hiring web application built with **Python**, **Flask**, and *
 
 ---
 
-### 🛡️ Administrative Oversight & Visual Analytics
-| 📊 Admin Interactive Analytics & Pagination | 🏢 Post New Job Vacancy |
+### 🛡️ Administrative Oversight & Candidate AI Performance
+| 📊 Admin Interactive Analytics & Pagination | 📈 Candidate AI Interview Scorecards |
 | :---: | :---: |
-| ![Admin Dashboard](assets/screenshots/05_admin_dashboard.png) | ![Add Job Page](assets/screenshots/Add%20job%20page-job%20portal.png) |
-
----
-
-### 📬 Recruitment Workflow & Applications Tracking
-| 📄 Candidate Application View | 📬 Employer Applications Review |
-| :---: | :---: |
-| ![My Applications](assets/screenshots/User%20application%20view%20page-job%20portal.png) | ![Employer Review](assets/screenshots/Employer%20application%20view%20page%20-%20job%20portal.png) |
+| ![Admin Dashboard](assets/screenshots/05_admin_dashboard.png) | ![Candidate AI Scorecards](assets/screenshots/06_ai_scorecard_history.png) |
 
 ---
 
@@ -199,19 +192,13 @@ job-portal/
 |-- run_app.bat                 # 1-Click Windows startup launcher
 |
 |-- assets/
-|   +-- screenshots/            # High-resolution UI showcase images
+|   +-- screenshots/            # High-resolution modern UI showcase images
 |       |-- 01_home_modern.png
 |       |-- 02_interview_hub.png
 |       |-- 03_f2f_ai_mock_room.png
 |       |-- 04_technical_cloud_ide.png
 |       |-- 05_admin_dashboard.png
-|       |-- Add job page-job portal.png
-|       |-- Admin page-job portal.png
-|       |-- Employer application view page - job portal.png
-|       |-- Home page-Job portal.png
-|       |-- Login page-job portal.png
-|       |-- Register page-job portal.png
-|       +-- User application view page-job portal.png
+|       +-- 06_ai_scorecard_history.png
 |
 |-- instance/
 |   +-- jobportal.db            # SQLite database file (auto-seeded on launch)
