@@ -43,12 +43,22 @@
 
         <!-- ROUND SWITCHER PILLS -->
         <div class="d-flex align-items-center gap-2">
-            <button type="button" class="round-tab-btn active" id="tab-btn-round1" onclick="switchRound(1)">
-                <span>🎥 Round 1: Face-to-Face AI</span>
-            </button>
-            <button type="button" class="round-tab-btn" id="tab-btn-round2" onclick="switchRound(2)">
-                <span>💻 Round 2: Technical Coding</span>
-            </button>
+            {% if bundle.mode == 'f2f' %}
+                <span class="badge bg-primary px-3 py-2 rounded-pill fw-bold" style="font-size: 13.5px;">
+                    🎥 Face-to-Face AI Mock Interview
+                </span>
+            {% elif bundle.mode == 'technical' %}
+                <span class="badge bg-success px-3 py-2 rounded-pill fw-bold" style="font-size: 13.5px;">
+                    💻 Technical Coding Round
+                </span>
+            {% else %}
+                <button type="button" class="round-tab-btn active" id="tab-btn-round1" onclick="switchRound(1)">
+                    <span>🎥 Round 1: Face-to-Face AI</span>
+                </button>
+                <button type="button" class="round-tab-btn" id="tab-btn-round2" onclick="switchRound(2)">
+                    <span>💻 Round 2: Technical Coding</span>
+                </button>
+            {% endif %}
         </div>
 
         <!-- SESSION TIMER & SUBMIT ACTION -->
@@ -57,8 +67,14 @@
                 <span>⏱ Session:</span>
                 <span id="session-timer" class="text-dark">Ready (00:00)</span>
             </div>
-            <button type="button" class="btn btn-primary fw-bold px-4 py-2" style="border-radius: var(--radius-sm); background: var(--primary); border: none;" onclick="submitCompleteInterview()">
-                🏆 Complete & Score AI
+            <button type="button" id="btn-top-complete" class="btn btn-primary fw-bold px-4 py-2" style="border-radius: var(--radius-sm); background: var(--primary); border: none;" onclick="submitCompleteInterview()">
+                {% if bundle.mode == 'f2f' %}
+                    🏆 Complete & Score AI Mock
+                {% elif bundle.mode == 'technical' %}
+                    🏆 Submit & Score Technical Round
+                {% else %}
+                    🏆 Complete & Score AI
+                {% endif %}
             </button>
         </div>
     </div>
@@ -223,9 +239,15 @@
                     <button type="button" class="btn btn-primary px-4 fw-bold" id="btn-next-q" onclick="nextQuestion()" style="border-radius: var(--radius-sm); background: var(--primary); border: none;">
                         Save & Next Question &rarr;
                     </button>
-                    <button type="button" class="btn btn-success px-4 fw-bold" onclick="switchRound(2)" style="border-radius: var(--radius-sm);">
-                        Proceed to Technical Round &rarr;
-                    </button>
+                    {% if bundle.mode == 'f2f' %}
+                        <button type="button" class="btn btn-success px-4 fw-bold" onclick="submitCompleteInterview()" style="border-radius: var(--radius-sm); background: linear-gradient(135deg, #10b981 0%, #059669 100%); border: none;">
+                            🏆 Complete Mock Interview &rarr;
+                        </button>
+                    {% else %}
+                        <button type="button" class="btn btn-success px-4 fw-bold" onclick="switchRound(2)" style="border-radius: var(--radius-sm);">
+                            Proceed to Technical Round &rarr;
+                        </button>
+                    {% endif %}
                 </div>
             </div>
         </div>
@@ -238,35 +260,66 @@
          ============================================================================== -->
     <div id="round-2-container" style="display: none;">
         
+        <!-- PRE-TECHNICAL ENVIRONMENT BANNER -->
+        <div id="pre-technical-banner" class="alert border-0 shadow-sm d-flex flex-wrap align-items-center justify-content-between p-3 mb-4 rounded-3" style="background: linear-gradient(135deg, #eef2ff 0%, #f0fdf4 100%); border-left: 5px solid #10b981 !important;">
+            <div class="d-flex align-items-center gap-3">
+                <span class="fs-3">💻</span>
+                <div>
+                    <h6 class="fw-bold mb-1" style="color: var(--secondary);">Technical Coding Environment &bull; Readiness Check</h6>
+                    <p class="mb-0 small text-muted">
+                        Select your language and review the challenge statements below. When you are ready to begin, click <strong>Start Technical Session</strong> to start the timer.
+                    </p>
+                </div>
+            </div>
+            <div class="mt-2 mt-md-0">
+                <button type="button" id="btn-start-tech-session" class="btn btn-primary fw-bold px-4 py-2 shadow-sm d-flex align-items-center gap-2" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); border: none; border-radius: var(--radius-md); font-size: 14.5px;" onclick="startTechnicalSession()">
+                    <span>🚀</span> <span>Start Technical Session</span>
+                </button>
+            </div>
+        </div>
+
         <div class="coding-ide-grid">
 
             <!-- LEFT PANE: Challenge Description & Test Cases -->
             <div class="ide-left-pane">
+                
+                <!-- MULTIPLE CHALLENGE TABS (Changes Every Time!) -->
+                {% if bundle.coding_challenges and bundle.coding_challenges|length > 1 %}
+                    <div class="d-flex align-items-center gap-2 mb-3 pb-2 border-bottom flex-wrap" id="challenge-tabs-nav">
+                        <span class="fw-bold small text-muted me-1">Challenges:</span>
+                        {% for chal in bundle.coding_challenges %}
+                            <button type="button" class="btn btn-sm {% if loop.first %}btn-primary active{% else %}btn-outline-primary{% endif %} challenge-tab-pill fw-bold px-3 py-1 rounded-pill" id="chal-tab-{{ loop.index0 }}" onclick="selectChallenge({{ loop.index0 }})">
+                                Q{{ loop.index }}: {{ chal.title[:18] }}{% if chal.title|length > 18 %}...{% endif %}
+                            </button>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+
                 <div class="d-flex justify-content-between align-items-start mb-3">
-                    <span class="badge bg-warning-subtle text-dark border border-warning px-3 py-1 rounded-pill fw-bold">
+                    <span class="badge bg-warning-subtle text-dark border border-warning px-3 py-1 rounded-pill fw-bold" id="current-chal-diff">
                         Difficulty: {{ bundle.coding_challenge.difficulty }}
                     </span>
-                    <span class="text-muted small">⏱ Suggested: {{ bundle.coding_challenge.time_limit_mins }} mins</span>
+                    <span class="text-muted small" id="current-chal-time">⏱ Suggested: {{ bundle.coding_challenge.time_limit_mins }} mins</span>
                 </div>
 
-                <h3 class="fw-bold mb-3" style="color: var(--secondary);">{{ bundle.coding_challenge.title }}</h3>
+                <h3 class="fw-bold mb-3" id="current-chal-title" style="color: var(--secondary);">{{ bundle.coding_challenge.title }}</h3>
 
-                <div class="challenge-desc mb-4" style="color: var(--text-main); font-size: 0.95rem; line-height: 1.6;">
+                <div class="challenge-desc mb-4" id="current-chal-desc" style="color: var(--text-main); font-size: 0.95rem; line-height: 1.6;">
                     {{ bundle.coding_challenge.description|safe }}
                 </div>
 
                 <!-- Input & Output Formats -->
                 <div class="bg-white p-3 rounded-3 border mb-3">
                     <div class="fw-bold small text-secondary mb-1">📥 Input Format:</div>
-                    <div class="small text-muted mb-2">{{ bundle.coding_challenge.input_format|safe }}</div>
+                    <div class="small text-muted mb-2" id="current-chal-input-fmt">{{ bundle.coding_challenge.input_format|safe }}</div>
                     <div class="fw-bold small text-secondary mb-1">📤 Output Format:</div>
-                    <div class="small text-muted">{{ bundle.coding_challenge.output_format|safe }}</div>
+                    <div class="small text-muted" id="current-chal-output-fmt">{{ bundle.coding_challenge.output_format|safe }}</div>
                 </div>
 
                 <!-- Constraints -->
                 <div class="mb-4">
                     <h6 class="fw-bold small text-dark mb-2">Constraints:</h6>
-                    <ul class="small text-muted mb-0 ps-3">
+                    <ul class="small text-muted mb-0 ps-3" id="current-chal-constraints">
                         {% for con in bundle.coding_challenge.constraints %}
                             <li><code>{{ con }}</code></li>
                         {% endfor %}
@@ -275,19 +328,21 @@
 
                 <!-- Example Test Cases -->
                 <h6 class="fw-bold small text-dark mb-2">Example Cases:</h6>
-                {% for ex in bundle.coding_challenge.examples %}
-                    <div class="bg-white p-3 rounded-3 border mb-3">
-                        <div class="d-flex justify-content-between align-items-center mb-1">
-                            <span class="fw-bold small text-primary">Example {{ loop.index }}:</span>
-                            <button type="button" class="btn btn-link btn-sm p-0 text-decoration-none small text-muted" onclick="loadExampleStdin(`{{ ex.input }}`)">
-                                📋 Paste in Stdin
-                            </button>
+                <div id="current-chal-examples">
+                    {% for ex in bundle.coding_challenge.examples %}
+                        <div class="bg-white p-3 rounded-3 border mb-3">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <span class="fw-bold small text-primary">Example {{ loop.index }}:</span>
+                                <button type="button" class="btn btn-link btn-sm p-0 text-decoration-none small text-muted" onclick="loadExampleStdin(`{{ ex.input }}`)">
+                                    📋 Paste in Stdin
+                                </button>
+                            </div>
+                            <div class="small mb-1"><strong>Input:</strong> <pre class="bg-light p-1 rounded small mb-1">{{ ex.input }}</pre></div>
+                            <div class="small mb-1"><strong>Output:</strong> <pre class="bg-light p-1 rounded small mb-1">{{ ex.output }}</pre></div>
+                            <div class="small text-muted"><strong>Explanation:</strong> {{ ex.explanation }}</div>
                         </div>
-                        <div class="small mb-1"><strong>Input:</strong> <pre class="bg-light p-1 rounded small mb-1">{{ ex.input }}</pre></div>
-                        <div class="small mb-1"><strong>Output:</strong> <pre class="bg-light p-1 rounded small mb-1">{{ ex.output }}</pre></div>
-                        <div class="small text-muted"><strong>Explanation:</strong> {{ ex.explanation }}</div>
-                    </div>
-                {% endfor %}
+                    {% endfor %}
+                </div>
             </div>
 
             <!-- RIGHT PANE: Code Editor & Live Compiler Console -->
@@ -408,6 +463,10 @@
                 <!-- Report Content (Populated via JS) -->
                 <div id="eval-content" style="display: none;">
                     
+                    <div class="mb-3">
+                        <span id="eval-mode-badge" class="badge bg-primary px-3 py-1 rounded-pill fw-bold">Interview Assessment Report</span>
+                    </div>
+
                     <!-- Top Score Summary -->
                     <div class="row align-items-center g-4 mb-4 pb-4 border-bottom">
                         <div class="col-md-4 text-center">
@@ -506,9 +565,13 @@
     // ==============================================================================
     const BUNDLE = {{ bundle_json|safe }};
     const JOB_ID = {{ job.id if job else 'null' }};
+    const sessionMode = BUNDLE.mode || 'f2f';
     
     let currentQuestionIndex = 0;
-    const candidateAnswers = new Array(BUNDLE.face_to_face_questions.length).fill("");
+    const candidateAnswers = new Array((BUNDLE.face_to_face_questions || []).length).fill("");
+    
+    let currentChallengeIndex = 0;
+    const challengeCodes = {};
     
     let currentLanguage = 'python';
     let lastCodeRunResult = { status: 'not_run', output: '', code: '' };
@@ -562,7 +625,7 @@
                     <span class="fs-4">🟢</span>
                     <div>
                         <h6 class="fw-bold mb-1 text-success">Interview Session In Progress</h6>
-                        <p class="mb-0 small text-muted">Timer is running. Speak or type your answers, and advance through the questions and technical round.</p>
+                        <p class="mb-0 small text-muted">Timer is running. Speak or type your answers, and advance through the questions.</p>
                     </div>
                 </div>
                 <div class="mt-2 mt-md-0 d-flex align-items-center gap-2">
@@ -582,6 +645,38 @@
         setTimeout(() => {
             speakCurrentQuestion();
         }, 500);
+    }
+
+    function startTechnicalSession() {
+        if (isSessionStarted) return;
+        isSessionStarted = true;
+
+        if (!sessionTimerInterval) {
+            sessionTimerInterval = setInterval(() => {
+                sessionSeconds++;
+                updateTimerDisplay();
+            }, 1000);
+        }
+        updateTimerDisplay();
+
+        const banner = document.getElementById('pre-technical-banner');
+        if (banner) {
+            banner.className = 'alert alert-success border-0 shadow-sm d-flex flex-wrap align-items-center justify-content-between p-3 mb-4 rounded-3';
+            banner.style.background = 'linear-gradient(135deg, #ecfdf5 0%, #f0fdf4 100%)';
+            banner.style.borderLeft = '5px solid #10b981 !important';
+            banner.innerHTML = `
+                <div class="d-flex align-items-center gap-3">
+                    <span class="fs-4">🟢</span>
+                    <div>
+                        <h6 class="fw-bold mb-1 text-success">Technical Coding Session Active</h6>
+                        <p class="mb-0 small text-muted">Timer is running. Solve and run code against test cases for each challenge.</p>
+                    </div>
+                </div>
+                <div class="mt-2 mt-md-0 d-flex align-items-center gap-2">
+                    <span class="badge bg-success px-3 py-2 rounded-pill fw-bold">Live Coding</span>
+                </div>
+            `;
+        }
     }
 
     // ==============================================================================
@@ -631,6 +726,13 @@
         // Timer is stopped at Ready (00:00) until candidate clicks 'Start Interview Session'
         const timerEl = document.getElementById('session-timer');
         if (timerEl) timerEl.textContent = 'Ready (00:00)';
+
+        // Open initial round based on selected session mode
+        if (sessionMode === 'technical') {
+            switchRound(2);
+        } else {
+            switchRound(1);
+        }
     });
 
     // ==============================================================================
@@ -638,8 +740,10 @@
     // ==============================================================================
     function switchRound(roundNum) {
         // Save current answer before switching
-        const ans = document.getElementById('candidate-answer-textarea').value;
-        candidateAnswers[currentQuestionIndex] = ans;
+        const ansArea = document.getElementById('candidate-answer-textarea');
+        if (ansArea) {
+            candidateAnswers[currentQuestionIndex] = ansArea.value;
+        }
 
         const r1 = document.getElementById('round-1-container');
         const r2 = document.getElementById('round-2-container');
@@ -647,15 +751,15 @@
         const btn2 = document.getElementById('tab-btn-round2');
 
         if (roundNum === 1) {
-            r1.style.display = 'block';
-            r2.style.display = 'none';
-            btn1.classList.add('active');
-            btn2.classList.remove('active');
+            if (r1) r1.style.display = 'block';
+            if (r2) r2.style.display = 'none';
+            if (btn1) btn1.classList.add('active');
+            if (btn2) btn2.classList.remove('active');
         } else {
-            r1.style.display = 'none';
-            r2.style.display = 'block';
-            btn1.classList.remove('active');
-            btn2.classList.add('active');
+            if (r1) r1.style.display = 'none';
+            if (r2) r2.style.display = 'block';
+            if (btn1) btn1.classList.remove('active');
+            if (btn2) btn2.classList.add('active');
         }
     }
 
@@ -951,10 +1055,94 @@
         }
     }
 
+    function getActiveChallenge() {
+        if (BUNDLE.coding_challenges && BUNDLE.coding_challenges.length > currentChallengeIndex) {
+            return BUNDLE.coding_challenges[currentChallengeIndex];
+        }
+        return BUNDLE.coding_challenge;
+    }
+
+    function selectChallenge(idx) {
+        if (!BUNDLE.coding_challenges || !BUNDLE.coding_challenges[idx]) return;
+
+        // Save active editor code into challengeCodes
+        const editor = document.getElementById('code-editor-textarea');
+        if (editor) {
+            if (!challengeCodes[currentChallengeIndex]) challengeCodes[currentChallengeIndex] = {};
+            challengeCodes[currentChallengeIndex][currentLanguage] = editor.value;
+        }
+
+        currentChallengeIndex = idx;
+        const chal = BUNDLE.coding_challenges[idx];
+
+        // Update active tab buttons
+        document.querySelectorAll('.challenge-tab-pill').forEach((btn, i) => {
+            if (i === idx) {
+                btn.className = 'btn btn-sm btn-primary active challenge-tab-pill fw-bold px-3 py-1 rounded-pill';
+            } else {
+                btn.className = 'btn btn-sm btn-outline-primary challenge-tab-pill fw-bold px-3 py-1 rounded-pill';
+            }
+        });
+
+        // Update left pane details
+        const titleEl = document.getElementById('current-chal-title');
+        if (titleEl) titleEl.textContent = chal.title;
+
+        const diffEl = document.getElementById('current-chal-diff');
+        if (diffEl) diffEl.textContent = `Difficulty: ${chal.difficulty}`;
+
+        const timeEl = document.getElementById('current-chal-time');
+        if (timeEl) timeEl.textContent = `⏱ Suggested: ${chal.time_limit_mins || 20} mins`;
+
+        const descEl = document.getElementById('current-chal-desc');
+        if (descEl) descEl.innerHTML = chal.description;
+
+        const inFmt = document.getElementById('current-chal-input-fmt');
+        if (inFmt) inFmt.innerHTML = chal.input_format || '';
+
+        const outFmt = document.getElementById('current-chal-output-fmt');
+        if (outFmt) outFmt.innerHTML = chal.output_format || '';
+
+        const constrList = document.getElementById('current-chal-constraints');
+        if (constrList) {
+            constrList.innerHTML = (chal.constraints || []).map(c => `<li><code>${c}</code></li>`).join('');
+        }
+
+        const exContainer = document.getElementById('current-chal-examples');
+        if (exContainer) {
+            exContainer.innerHTML = (chal.examples || []).map((ex, i) => `
+                <div class="bg-white p-3 rounded-3 border mb-3">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <span class="fw-bold small text-primary">Example ${i + 1}:</span>
+                        <button type="button" class="btn btn-link btn-sm p-0 text-decoration-none small text-muted" onclick="loadExampleStdin(\`${ex.input}\`)">
+                            📋 Paste in Stdin
+                        </button>
+                    </div>
+                    <div class="small mb-1"><strong>Input:</strong> <pre class="bg-light p-1 rounded small mb-1">${ex.input}</pre></div>
+                    <div class="small mb-1"><strong>Output:</strong> <pre class="bg-light p-1 rounded small mb-1">${ex.output}</pre></div>
+                    <div class="small text-muted"><strong>Explanation:</strong> ${ex.explanation}</div>
+                </div>
+            `).join('');
+        }
+
+        // Set default stdin
+        const stdinEl = document.getElementById('custom-stdin-input');
+        if (stdinEl) stdinEl.value = chal.default_stdin || '';
+
+        // Load existing code or fresh boilerplate
+        if (challengeCodes[idx] && challengeCodes[idx][currentLanguage]) {
+            if (editor) editor.value = challengeCodes[idx][currentLanguage];
+        } else {
+            loadBoilerplate(currentLanguage);
+        }
+    }
+
     function loadBoilerplate(lang) {
-        const boilerplates = BUNDLE.coding_challenge.boilerplates || {};
-        const code = boilerplates[lang] || "// Write your solution here\n";
-        document.getElementById('code-editor-textarea').value = code;
+        const chal = getActiveChallenge();
+        const boilerplates = chal ? (chal.boilerplates || {}) : {};
+        const code = boilerplates[lang] || `// Write your solution here for ${chal ? chal.title : 'Challenge'}\n`;
+        const editor = document.getElementById('code-editor-textarea');
+        if (editor) editor.value = code;
     }
 
     function resetBoilerplate() {
@@ -1058,9 +1246,17 @@
     // COMPLETE INTERVIEW & EVALUATION SUBMISSION
     // ==============================================================================
     async function submitCompleteInterview() {
-        // Save latest text
-        candidateAnswers[currentQuestionIndex] = document.getElementById('candidate-answer-textarea').value;
-        const code = document.getElementById('code-editor-textarea').value;
+        // Save latest text and active challenge code
+        const ansArea = document.getElementById('candidate-answer-textarea');
+        if (ansArea) {
+            candidateAnswers[currentQuestionIndex] = ansArea.value;
+        }
+        const editor = document.getElementById('code-editor-textarea');
+        const code = editor ? editor.value : '';
+        if (editor) {
+            if (!challengeCodes[currentChallengeIndex]) challengeCodes[currentChallengeIndex] = {};
+            challengeCodes[currentChallengeIndex][currentLanguage] = code;
+        }
 
         // Auto-run code if not run yet
         if (lastCodeRunResult.status === 'not_run') {
@@ -1096,8 +1292,10 @@
                     role_title: BUNDLE.role_title,
                     company: BUNDLE.company,
                     bundle: BUNDLE,
+                    mode: sessionMode,
                     answers: candidateAnswers,
-                    code_submission: lastCodeRunResult
+                    code_submission: lastCodeRunResult,
+                    all_code_submissions: challengeCodes
                 })
             });
 
@@ -1116,6 +1314,20 @@
     function renderEvaluationReport(ev) {
         document.getElementById('eval-loading').style.display = 'none';
         document.getElementById('eval-content').style.display = 'block';
+
+        const modeBadge = document.getElementById('eval-mode-badge');
+        if (modeBadge) {
+            if (ev.session_mode === 'f2f') {
+                modeBadge.textContent = '🎥 Face-to-Face AI Mock Interview Scorecard';
+                modeBadge.className = 'badge bg-primary px-3 py-2 rounded-pill fw-bold';
+            } else if (ev.session_mode === 'technical') {
+                modeBadge.textContent = '💻 Technical Coding Interview Scorecard';
+                modeBadge.className = 'badge bg-success px-3 py-2 rounded-pill fw-bold';
+            } else {
+                modeBadge.textContent = '🌟 Comprehensive Dual-Round Scorecard';
+                modeBadge.className = 'badge bg-primary px-3 py-2 rounded-pill fw-bold';
+            }
+        }
 
         document.getElementById('eval-role-company').textContent = `${ev.role_title} at ${ev.company}`;
         document.getElementById('eval-overall-score').textContent = ev.overall_score;

@@ -156,9 +156,42 @@
                         </span>
 
                         <div class="d-flex align-items-center gap-2">
-                            <a href="{{ url_for('start_job_interview', job_id=job.id) }}" class="btn-interview-card" title="Practice Face-to-Face & Technical Coding interview for this job">
-                                🎯 Practice
-                            </a>
+                            <div class="dropdown">
+                                <button class="btn-interview-card dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="Practice Face-to-Face Mock or Technical Coding">
+                                    🎯 Practice
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-end shadow border-0 p-2" style="border-radius: var(--radius-md); min-width: 250px; z-index: 1050;">
+                                    <li>
+                                        <a class="dropdown-item d-flex align-items-center gap-2 py-2 px-3 rounded-2" href="{{ url_for('start_job_interview', job_id=job.id, mode='f2f') }}">
+                                            <span class="fs-5">🎥</span>
+                                            <div>
+                                                <div class="fw-bold small text-dark">Face-to-Face AI Mock</div>
+                                                <div class="text-muted" style="font-size: 11px;">Webcam & Voice AI Recruiter</div>
+                                            </div>
+                                        </a>
+                                    </li>
+                                    <li><hr class="dropdown-divider my-1"></li>
+                                    <li>
+                                        <a class="dropdown-item d-flex align-items-center gap-2 py-2 px-3 rounded-2" href="{{ url_for('start_job_interview', job_id=job.id, mode='technical') }}">
+                                            <span class="fs-5">💻</span>
+                                            <div>
+                                                <div class="fw-bold small text-dark">Technical Coding Round</div>
+                                                <div class="text-muted" style="font-size: 11px;">Multi-Language IDE & Compiler</div>
+                                            </div>
+                                        </a>
+                                    </li>
+                                    <li><hr class="dropdown-divider my-1"></li>
+                                    <li>
+                                        <a class="dropdown-item d-flex align-items-center gap-2 py-2 px-3 rounded-2" href="{{ url_for('start_job_interview', job_id=job.id, mode='full') }}">
+                                            <span class="fs-5">🌟</span>
+                                            <div>
+                                                <div class="fw-bold small text-dark">Combined Dual Round</div>
+                                                <div class="text-muted" style="font-size: 11px;">Both Mock & Technical</div>
+                                            </div>
+                                        </a>
+                                    </li>
+                                </ul>
+                            </div>
                             {% if not user.is_authenticated or (not user.is_employer and not user.is_admin) %}
                                 <a href="{{ url_for('apply_job', job_id=job.id) }}" class="btn-apply-card">
                                     <span>Apply</span> &rarr;

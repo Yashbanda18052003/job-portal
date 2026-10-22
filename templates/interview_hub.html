@@ -108,9 +108,14 @@
                             </p>
                             <div class="d-flex align-items-center justify-content-between pt-2 border-top mt-auto">
                                 <span class="text-muted small">📍 {{ job.location or "Remote" }}</span>
-                                <a href="{{ url_for('start_job_interview', job_id=job.id) }}" class="btn-interview-card">
-                                    🎯 Start Interview &rarr;
-                                </a>
+                                <div class="d-flex gap-1">
+                                    <a href="{{ url_for('start_job_interview', job_id=job.id, mode='f2f') }}" class="btn btn-outline-primary btn-sm fw-bold px-2 py-1 rounded-2" title="Face-to-Face AI Mock Interview">
+                                        🎥 Mock AI
+                                    </a>
+                                    <a href="{{ url_for('start_job_interview', job_id=job.id, mode='technical') }}" class="btn btn-primary btn-sm fw-bold px-2 py-1 rounded-2" style="background: var(--primary); border: none;" title="Technical Coding IDE Round">
+                                        💻 Tech Round
+                                    </a>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -148,9 +153,14 @@
                             <strong>Target Role:</strong> {{ track.role }}
                         </div>
 
-                        <a href="{{ url_for('start_custom_interview', track=track.key, role=track.role) }}" class="btn-start-track">
-                            Launch Practice Simulator &rarr;
-                        </a>
+                        <div class="d-flex gap-2 mt-auto">
+                            <a href="{{ url_for('start_custom_interview', track=track.key, role=track.role, mode='f2f') }}" class="btn btn-outline-primary btn-sm fw-bold flex-grow-1 py-2 rounded-2">
+                                🎥 Face-to-Face Mock
+                            </a>
+                            <a href="{{ url_for('start_custom_interview', track=track.key, role=track.role, mode='technical') }}" class="btn btn-primary btn-sm fw-bold flex-grow-1 py-2 rounded-2" style="background: var(--primary); border: none;">
+                                💻 Technical IDE
+                            </a>
+                        </div>
                     </div>
                 </div>
             {% endfor %}

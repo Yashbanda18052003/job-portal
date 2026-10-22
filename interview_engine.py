@@ -1540,14 +1540,586 @@ console.log("SQL Challenge: Switch language to SQL in the dropdown above to exec
 console.log("HTML & CSS Challenge: Switch language to 'HTML5 & CSS3' to view code and live interactive preview!");
 '''
         }
+    },
+    {
+        'id': 'valid-parentheses',
+        'title': 'Valid Parentheses - Stack & Bracket Parser',
+        'domain_affinity': ['backend', 'fullstack', 'devops', 'mobile', 'frontend'],
+        'difficulty': 'Easy',
+        'time_limit_mins': 15,
+        'description': """Given a string <code>s</code> containing just the characters <code>'('</code>, <code>')'</code>, <code>'{'</code>, <code>'}'</code>, <code>'['</code> and <code>']'</code>, determine if the input string is valid.
+        <br><br>
+        An input string is valid if:
+        1. Open brackets must be closed by the same type of brackets.
+        2. Open brackets must be closed in the correct order.
+        3. Every close bracket has a corresponding open bracket of the same type.""",
+        'input_format': "A single line containing string <code>s</code>",
+        'output_format': "Boolean: <code>true</code> or <code>false</code>",
+        'constraints': ["1 <= s.length <= 10^4", "s consists of parentheses only '()[]{}'."],
+        'examples': [
+            {'input': "()[]{}", 'output': "true", 'explanation': "All brackets open and close properly."},
+            {'input': "(]", 'output': "false", 'explanation': "Square bracket does not match parenthesis."}
+        ],
+        'default_stdin': "()[]{}",
+        'test_cases': [
+            {'stdin': "()[]{}", 'expected': "true"},
+            {'stdin': "(]", 'expected': "false"}
+        ],
+        'boilerplates': {
+            'python': '''import sys
+
+def is_valid(s: str) -> bool:
+    stack = []
+    mapping = {")": "(", "}": "{", "]": "["}
+    for char in s:
+        if char in mapping:
+            top = stack.pop() if stack else '#'
+            if mapping[char] != top:
+                return False
+        else:
+            stack.append(char)
+    return not stack
+
+if __name__ == '__main__':
+    raw = sys.stdin.read().strip()
+    print("true" if is_valid(raw) else "false")
+''',
+            'javascript': '''const fs = require('fs');
+
+function isValid(s) {
+    const stack = [];
+    const map = { ')': '(', '}': '{', ']': '[' };
+    for (let c of s) {
+        if (c in map) {
+            if (stack.pop() !== map[c]) return false;
+        } else {
+            stack.push(c);
+        }
+    }
+    return stack.length === 0;
+}
+
+const input = fs.readFileSync(0, 'utf-8').trim();
+console.log(isValid(input) ? "true" : "false");
+''',
+            'php': '''<?php
+function isValid($s) {
+    $stack = [];
+    $map = [')' => '(', '}' => '{', ']' => '['];
+    for ($i = 0; $i < strlen($s); $i++) {
+        $c = $s[$i];
+        if (isset($map[$c])) {
+            $top = array_pop($stack);
+            if ($top !== $map[$c]) return false;
+        } else {
+            array_push($stack, $c);
+        }
+    }
+    return empty($stack);
+}
+
+$input = trim(stream_get_contents(STDIN));
+echo (isValid($input) ? "true" : "false") . "\\n";
+'''
+        }
+    },
+    {
+        'id': 'merge-intervals',
+        'title': 'Merge Overlapping Intervals',
+        'domain_affinity': ['backend', 'devops', 'data_ai', 'fullstack'],
+        'difficulty': 'Medium',
+        'time_limit_mins': 20,
+        'description': """Given an array of intervals where <code>intervals[i] = [start_i, end_i]</code>, merge all overlapping intervals, and return an array of the non-overlapping intervals that cover all intervals in the input.""",
+        'input_format': "Semicolon-separated pairs e.g. <code>1,3;2,6;8,10;15,18</code>",
+        'output_format': "Merged array string e.g. <code>[[1, 6], [8, 10], [15, 18]]</code>",
+        'constraints': ["1 <= intervals.length <= 10^4", "start_i <= end_i"],
+        'examples': [
+            {'input': "1,3;2,6;8,10;15,18", 'output': "[[1, 6], [8, 10], [15, 18]]", 'explanation': "Since intervals [1,3] and [2,6] overlap, merge them into [1,6]."}
+        ],
+        'default_stdin': "1,3;2,6;8,10;15,18",
+        'test_cases': [
+            {'stdin': "1,3;2,6;8,10;15,18", 'expected': "[[1, 6], [8, 10], [15, 18]]"}
+        ],
+        'boilerplates': {
+            'python': '''import sys
+
+def merge(intervals):
+    if not intervals: return []
+    intervals.sort(key=lambda x: x[0])
+    merged = [intervals[0]]
+    for cur in intervals[1:]:
+        if cur[0] <= merged[-1][1]:
+            merged[-1][1] = max(merged[-1][1], cur[1])
+        else:
+            merged.append(cur)
+    return merged
+
+if __name__ == '__main__':
+    raw = sys.stdin.read().strip()
+    if not raw:
+        print("[]")
+        sys.exit(0)
+    pairs = [[int(x) for x in p.split(',')] for p in raw.split(';') if p]
+    res = merge(pairs)
+    print(res)
+''',
+            'javascript': '''const fs = require('fs');
+
+function merge(intervals) {
+    if (!intervals.length) return [];
+    intervals.sort((a, b) => a[0] - b[0]);
+    const merged = [intervals[0]];
+    for (let i = 1; i < intervals.length; i++) {
+        const cur = intervals[i];
+        const last = merged[merged.length - 1];
+        if (cur[0] <= last[1]) {
+            last[1] = Math.max(last[1], cur[1]);
+        } else {
+            merged.push(cur);
+        }
+    }
+    return merged;
+}
+
+const input = fs.readFileSync(0, 'utf-8').trim();
+if (!input) {
+    console.log("[]");
+} else {
+    const pairs = input.split(';').map(p => p.split(',').map(Number));
+    console.log(JSON.stringify(merge(pairs)).replace(/,/g, ', '));
+}
+'''
+        }
+    },
+    {
+        'id': 'reverse-words-string',
+        'title': 'Reverse Words in a String',
+        'domain_affinity': ['frontend', 'fullstack', 'mobile', 'backend'],
+        'difficulty': 'Easy',
+        'time_limit_mins': 15,
+        'description': """Given an input string <code>s</code>, reverse the order of the words.
+        <br><br>
+        A word is defined as a sequence of non-space characters. The words in <code>s</code> will be separated by at least one space. Return a string of the words in reverse order concatenated by a single space.""",
+        'input_format': "A single line containing sentence <code>s</code>",
+        'output_format': "String with reversed words",
+        'constraints': ["1 <= s.length <= 10^4", "s contains English letters, digits, and spaces."],
+        'examples': [
+            {'input': "the sky is blue", 'output': "blue is sky the", 'explanation': "Words reversed in place."},
+            {'input': "  hello world  ", 'output': "world hello", 'explanation': "Extra whitespace trimmed."}
+        ],
+        'default_stdin': "the sky is blue",
+        'test_cases': [
+            {'stdin': "the sky is blue", 'expected': "blue is sky the"},
+            {'stdin': "  hello world  ", 'expected': "world hello"}
+        ],
+        'boilerplates': {
+            'python': '''import sys
+
+def reverse_words(s: str) -> str:
+    return " ".join(s.strip().split()[::-1])
+
+if __name__ == '__main__':
+    raw = sys.stdin.read()
+    print(reverse_words(raw))
+''',
+            'javascript': '''const fs = require('fs');
+
+function reverseWords(s) {
+    return s.trim().split(/\\s+/).reverse().join(' ');
+}
+
+const input = fs.readFileSync(0, 'utf-8');
+console.log(reverseWords(input));
+''',
+            'php': '''<?php
+$input = stream_get_contents(STDIN);
+$words = preg_split('/\\s+/', trim($input));
+echo implode(' ', array_reverse($words)) . "\\n";
+'''
+        }
+    },
+    {
+        'id': 'sql-top-earners',
+        'title': 'SQL: Top Salary Earners by Department (DENSE_RANK)',
+        'domain_affinity': ['sql', 'backend', 'data_ai'],
+        'difficulty': 'Medium',
+        'time_limit_mins': 20,
+        'description': """Write an analytical SQL query that finds the highest-earning employees in each department.
+        <br><br>
+        If there is a tie for the highest salary in a department, include all employees tied for first place using the <code>DENSE_RANK()</code> window function.
+        <br><br>
+        Table Schema:
+        <code>employees (id INT, name TEXT, department TEXT, salary INT)</code>""",
+        'input_format': "In-Memory Relational Database",
+        'output_format': "Relational table ordered by department and salary desc",
+        'constraints': ["department and salary must not be null."],
+        'examples': [
+            {'input': "SELECT department, name, salary...", 'output': "Engineering | Alice | 145000", 'explanation': "Shows department top earners."}
+        ],
+        'default_stdin': "",
+        'test_cases': [],
+        'boilerplates': {
+            'sql': '''-- SQL: Department Top Earners using Window Functions
+WITH RankedSalaries AS (
+    SELECT 
+        department,
+        name,
+        salary,
+        DENSE_RANK() OVER (PARTITION BY department ORDER BY salary DESC) as rank_pos
+    FROM employees
+)
+SELECT 
+    department,
+    name as employee,
+    salary
+FROM RankedSalaries
+WHERE rank_pos = 1
+ORDER BY department ASC, salary DESC;
+''',
+            'python': '''# Python simulation of SQL DENSE_RANK()
+employees = [
+    {"name": "Alice", "department": "Engineering", "salary": 145000},
+    {"name": "Bob", "department": "Engineering", "salary": 130000},
+    {"name": "Charlie", "department": "Marketing", "salary": 95000},
+    {"name": "Diana", "department": "Marketing", "salary": 95000},
+    {"name": "Evan", "department": "Design", "salary": 110000}
+]
+
+from collections import defaultdict
+dept_map = defaultdict(list)
+for emp in employees:
+    dept_map[emp["department"]].append(emp)
+
+for dept, emps in sorted(dept_map.items()):
+    max_sal = max(e["salary"] for e in emps)
+    top_emps = [e["name"] for e in emps if e["salary"] == max_sal]
+    for name in top_emps:
+        print(f"{dept} | {name} | ${max_sal:,}")
+'''
+        }
+    },
+    {
+        'id': 'php-array-flatten',
+        'title': 'PHP: Recursive Array Key Path Flattener',
+        'domain_affinity': ['php', 'fullstack', 'backend'],
+        'difficulty': 'Easy',
+        'time_limit_mins': 15,
+        'description': """Given a nested JSON string or associative array, recursively flatten all nested keys using dot-notation (e.g., <code>"user.address.city": "San Francisco"</code>).""",
+        'input_format': "JSON string e.g. <code>{\"user\":{\"name\":\"Alice\",\"city\":\"SF\"}}</code>",
+        'output_format': "Flattened JSON key-value pairs",
+        'constraints': ["Input is valid JSON."],
+        'examples': [
+            {'input': '{"user":{"name":"Alice","city":"SF"}}', 'output': 'user.city: SF', 'explanation': "Nested keys flattened with dot notation."}
+        ],
+        'default_stdin': '{"user":{"name":"Alice","city":"SF"}}',
+        'test_cases': [
+            {'stdin': '{"user":{"name":"Alice","city":"SF"}}', 'expected': 'user.city: SF'}
+        ],
+        'boilerplates': {
+            'php': '''<?php
+function flattenArray($arr, $prefix = '') {
+    $result = [];
+    foreach ($arr as $key => $val) {
+        $newKey = $prefix === '' ? $key : "{$prefix}.{$key}";
+        if (is_array($val)) {
+            $result = array_merge($result, flattenArray($val, $newKey));
+        } else {
+            $result[$newKey] = $val;
+        }
+    }
+    return $result;
+}
+
+$raw = trim(stream_get_contents(STDIN));
+$data = json_decode($raw, true) ?? [];
+$flat = flattenArray($data);
+foreach ($flat as $k => $v) {
+    echo "{$k}: {$v}\\n";
+}
+''',
+            'python': '''import sys, json
+
+def flatten(d, prefix=''):
+    items = []
+    for k, v in d.items():
+        new_k = f"{prefix}.{k}" if prefix else k
+        if isinstance(v, dict):
+            items.extend(flatten(v, new_k).items())
+        else:
+            items.append((new_k, v))
+    return dict(items)
+
+if __name__ == '__main__':
+    raw = sys.stdin.read().strip()
+    data = json.loads(raw) if raw else {}
+    for k, v in sorted(flatten(data).items()):
+        print(f"{k}: {v}")
+'''
+        }
+    },
+    {
+        'id': 'dart-stream-filter',
+        'title': 'Dart: Stream Evens Transformer & Multiplier',
+        'domain_affinity': ['dart', 'mobile'],
+        'difficulty': 'Easy',
+        'time_limit_mins': 15,
+        'description': """In Dart, take a comma-separated list of integers from stdin, filter for only the even integers, multiply each even integer by 3, and print the resulting values as a comma-separated list.""",
+        'input_format': "Comma-separated integers: <code>1,2,3,4,5,6</code>",
+        'output_format': "Transformed comma-separated integers: <code>6,12,18</code>",
+        'constraints': ["List length <= 10^3"],
+        'examples': [
+            {'input': "1,2,3,4,5,6", 'output': "6,12,18", 'explanation': "Evens 2,4,6 multiplied by 3 gives 6,12,18."}
+        ],
+        'default_stdin': "1,2,3,4,5,6",
+        'test_cases': [
+            {'stdin': "1,2,3,4,5,6", 'expected': "6,12,18"}
+        ],
+        'boilerplates': {
+            'dart': '''import 'dart:io';
+
+void main() {
+  String input = stdin.readLineSync() ?? '';
+  if (input.trim().isEmpty) {
+    print('');
+    return;
+  }
+  List<int> numbers = input.split(',').map((s) => int.parse(s.trim())).toList();
+  List<int> result = numbers.where((n) => n % 2 == 0).map((n) => n * 3).toList();
+  print(result.join(','));
+}
+''',
+            'python': '''import sys
+
+raw = sys.stdin.read().strip()
+if not raw:
+    print('')
+else:
+    nums = [int(x.strip()) for x in raw.split(',')]
+    res = [str(x * 3) for x in nums if x % 2 == 0]
+    print(','.join(res))
+'''
+        }
+    },
+    {
+        'id': 'swift-longest-prefix',
+        'title': 'Swift: Longest Common Prefix Finder',
+        'domain_affinity': ['swift', 'mobile'],
+        'difficulty': 'Easy',
+        'time_limit_mins': 15,
+        'description': """Write a function to find the longest common prefix string amongst an array of strings. If there is no common prefix, return an empty string <code>""</code>.""",
+        'input_format': "Comma-separated strings: <code>flower,flow,flight</code>",
+        'output_format': "Prefix string: <code>fl</code>",
+        'constraints': ["1 <= strs.length <= 200", "0 <= strs[i].length <= 200"],
+        'examples': [
+            {'input': "flower,flow,flight", 'output': "fl", 'explanation': "\"fl\" is common to all words."},
+            {'input': "dog,racecar,car", 'output': "", 'explanation': "No common prefix."}
+        ],
+        'default_stdin': "flower,flow,flight",
+        'test_cases': [
+            {'stdin': "flower,flow,flight", 'expected': "fl"},
+            {'stdin': "dog,racecar,car", 'expected': ""}
+        ],
+        'boilerplates': {
+            'swift': '''import Foundation
+
+func longestCommonPrefix(_ strs: [String]) -> String {
+    guard let first = strs.first, !strs.isEmpty else { return "" }
+    var prefix = first
+    for s in strs.dropFirst() {
+        while !s.hasPrefix(prefix) {
+            prefix = String(prefix.dropLast())
+            if prefix.isEmpty { return "" }
+        }
+    }
+    return prefix
+}
+
+let input = readLine() ?? ""
+let words = input.components(separatedBy: ",")
+print(longestCommonPrefix(words))
+''',
+            'python': '''import sys
+
+def longest_common_prefix(strs):
+    if not strs: return ""
+    prefix = strs[0]
+    for s in strs[1:]:
+        while not s.startswith(prefix):
+            prefix = prefix[:-1]
+            if not prefix: return ""
+    return prefix
+
+raw = sys.stdin.read().strip()
+words = [w.strip() for w in raw.split(',') if w.strip()]
+print(longest_common_prefix(words))
+'''
+        }
+    },
+    {
+        'id': 'html-css-accordion',
+        'title': 'HTML5 & CSS3: Accessible Animated FAQ Accordion',
+        'domain_affinity': ['html_css', 'frontend'],
+        'difficulty': 'Easy',
+        'time_limit_mins': 20,
+        'description': """Build a fully accessible, mobile-responsive FAQ Accordion component using semantic HTML5 and modern CSS3 transitions.
+        <br><br>
+        <strong>Requirements:</strong>
+        <ul>
+          <li>Use semantic <code>&lt;details&gt;</code> and <code>&lt;summary&gt;</code> tags.</li>
+          <li>Remove default browser disclosure marker and style a custom chevron indicator.</li>
+          <li>Apply smooth hover and active state styles with clean typography.</li>
+        </ul>""",
+        'input_format': "HTML5 Markup and CSS3 Rules",
+        'output_format': "Live Interactive Browser Preview",
+        'constraints': ["Pure CSS without third-party frameworks."],
+        'examples': [
+            {'input': "HTML & CSS Code", 'output': "Interactive Accordion", 'explanation': "Clicking expands answers with smooth animation."}
+        ],
+        'default_stdin': "",
+        'test_cases': [],
+        'boilerplates': {
+            'html_css': '''<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>FAQ Accordion</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f8fafc; padding: 2rem; display: flex; justify-content: center; }
+    .faq-container { width: 100%; max-width: 580px; }
+    details { background: #ffffff; border: 1.5px solid #e2e8f0; border-radius: 12px; margin-bottom: 12px; overflow: hidden; transition: all 0.2s ease; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+    details[open] { border-color: #6366f1; box-shadow: 0 4px 12px rgba(99,102,241,0.15); }
+    summary { padding: 16px 20px; font-weight: 700; color: #1e293b; cursor: pointer; display: flex; justify-content: space-between; align-items: center; user-select: none; list-style: none; }
+    summary::-webkit-details-marker { display: none; }
+    summary::after { content: "+"; font-size: 1.25rem; color: #6366f1; transition: transform 0.2s ease; }
+    details[open] summary::after { content: "−"; transform: rotate(180deg); }
+    .faq-content { padding: 0 20px 16px 20px; color: #64748b; font-size: 0.95rem; line-height: 1.6; }
+  </style>
+</head>
+<body>
+  <div class="faq-container">
+    <h2 style="color: #0f172a; margin-bottom: 1.5rem;">Frequently Asked Questions</h2>
+    <details open>
+      <summary>How does the AI Mock Interview system work?</summary>
+      <div class="faq-content">Our system uses WebRTC camera video, Speech-to-Text transcription, and speech synthesis to simulate real-world interviewer interactions with instant rubric scoring.</div>
+    </details>
+    <details>
+      <summary>Can I practice multiple programming languages?</summary>
+      <div class="faq-content">Yes! The technical round features real compilers for Python, JavaScript, PHP, SQL, HTML/CSS, Dart, Swift, Java, C++, C, Go, and Rust.</div>
+    </details>
+    <details>
+      <summary>Are interview questions randomized?</summary>
+      <div class="faq-content">Every session dynamically samples non-repeating questions across behavioral, architectural, incident handling, and coding domains.</div>
+    </details>
+  </div>
+</body>
+</html>
+'''
+        }
+    },
+    {
+        'id': 'devops-log-parser',
+        'title': 'DevOps: Incident Log IP Error Analyzer',
+        'domain_affinity': ['devops', 'backend', 'data_ai'],
+        'difficulty': 'Medium',
+        'time_limit_mins': 20,
+        'description': """Parse simulated web server log lines formatted as <code>IP STATUS_CODE PATH</code> separated by semicolons (<code>;</code>).
+        <br><br>
+        Identify and print the IP address with the highest frequency of HTTP <code>5xx</code> server errors (status code >= 500 and < 600), followed by its error count. If none exist, print <code>NONE</code>.""",
+        'input_format': "Semicolon-separated log records e.g. <code>10.0.0.1 500 /api;10.0.0.2 200 /home;10.0.0.1 502 /pay</code>",
+        'output_format': "String: <code>IP: COUNT</code> e.g. <code>10.0.0.1: 2</code>",
+        'constraints': ["IP addresses are standard IPv4 strings."],
+        'examples': [
+            {'input': "10.0.0.1 500 /api;10.0.0.2 200 /home;10.0.0.1 502 /pay", 'output': "10.0.0.1: 2", 'explanation': "10.0.0.1 caused two 5xx errors."}
+        ],
+        'default_stdin': "10.0.0.1 500 /api;10.0.0.2 200 /home;10.0.0.1 502 /pay",
+        'test_cases': [
+            {'stdin': "10.0.0.1 500 /api;10.0.0.2 200 /home;10.0.0.1 502 /pay", 'expected': "10.0.0.1: 2"}
+        ],
+        'boilerplates': {
+            'python': '''import sys
+from collections import defaultdict
+
+raw = sys.stdin.read().strip()
+if not raw:
+    print("NONE")
+    sys.exit(0)
+
+counts = defaultdict(int)
+for entry in raw.split(';'):
+    parts = entry.strip().split()
+    if len(parts) >= 2:
+        ip, status = parts[0], parts[1]
+        if status.isdigit() and 500 <= int(status) < 600:
+            counts[ip] += 1
+
+if not counts:
+    print("NONE")
+else:
+    top_ip = max(counts, key=counts.get)
+    print(f"{top_ip}: {counts[top_ip]}")
+''',
+            'javascript': '''const fs = require('fs');
+
+const input = fs.readFileSync(0, 'utf-8').trim();
+if (!input) {
+    console.log("NONE");
+    process.exit(0);
+}
+
+const counts = {};
+input.split(';').forEach(entry => {
+    const parts = entry.trim().split(/\\s+/);
+    if (parts.length >= 2) {
+        const ip = parts[0];
+        const status = parseInt(parts[1], 10);
+        if (status >= 500 && status < 600) {
+            counts[ip] = (counts[ip] || 0) + 1;
+        }
+    }
+});
+
+const ips = Object.keys(counts);
+if (!ips.length) {
+    console.log("NONE");
+} else {
+    ips.sort((a, b) => counts[b] - counts[a]);
+    console.log(`${ips[0]}: ${counts[ips[0]]}`);
+}
+'''
+        }
     }
 ]
+
+# Ensure every challenge has all language boilerplates populated
+def _populate_challenge_boilerplates():
+    for c in CODING_CHALLENGES:
+        bp = c.setdefault('boilerplates', {})
+        title = c.get('title', 'Coding Challenge')
+        defaults = {
+            'python': f"# {title}\\nimport sys\\n\\ndef solution():\\n    raw = sys.stdin.read().strip()\\n    # TODO: Implement solution\\n    print(raw)\\n\\nif __name__ == '__main__':\\n    solution()\\n",
+            'javascript': f"// {title}\\nconst fs = require('fs');\\n\\nfunction solution() {{\\n    const input = fs.readFileSync(0, 'utf-8').trim();\\n    // TODO: Implement solution\\n    console.log(input);\\n}}\\n\\nsolution();\\n",
+            'php': f"<?php\\n// {title}\\n$input = trim(stream_get_contents(STDIN));\\n// TODO: Implement solution\\necho $input . \"\\n\";\\n",
+            'sql': f"-- {title}\\n-- Write your SQL query below\\nSELECT * FROM employees;\\n",
+            'html_css': f"<!-- {title} -->\\n<div class=\"component\">\\n  <h2>{title}</h2>\\n  <p>Component implementation</p>\\n</div>\\n<style>\\n.component {{ padding: 20px; font-family: sans-serif; }}\\n</style>\\n",
+            'dart': f"// {title}\\nimport 'dart:io';\\n\\nvoid main() {{\\n  String input = stdin.readLineSync() ?? '';\\n  // TODO: Implement solution\\n  print(input);\\n}}\\n",
+            'swift': f"// {title}\\nimport Foundation\\n\\nlet input = readLine() ?? \"\"\\n// TODO: Implement solution\\nprint(input)\\n",
+            'java': f"// {title}\\nimport java.util.*;\\n\\npublic class Main {{\\n    public static void main(String[] args) {{\\n        Scanner sc = new Scanner(System.in);\\n        // TODO: Implement solution\\n        System.out.println(\"Output\");\\n    }}\\n}}\\n",
+            'cpp': f"// {title}\\n#include <iostream>\\n#include <string>\\nusing namespace std;\\n\\nint main() {{\\n    string line;\\n    // TODO: Implement solution\\n    cout << \"Output\" << endl;\\n    return 0;\\n}}\\n",
+            'c': f"// {title}\\n#include <stdio.h>\\n\\nint main() {{\\n    // TODO: Implement solution\\n    printf(\"Output\\n\");\\n    return 0;\\n}}\\n",
+            'go': f"// {title}\\npackage main\\nimport \"fmt\"\\n\\nfunc main() {{\\n    // TODO: Implement solution\\n    fmt.Println(\"Output\")\\n}}\\n",
+            'rust': f"// {title}\\nfn main() {{\\n    // TODO: Implement solution\\n    println!(\"Output\");\\n}}\\n"
+        }
+        for lang, tmpl in defaults.items():
+            if lang not in bp:
+                bp[lang] = tmpl
+
+_populate_challenge_boilerplates()
 
 
 # ==============================================================================
 # 4. GET FULL INTERVIEW BUNDLE FOR ANY JOB POST
 # ==============================================================================
-def get_interview_bundle(job=None, role_title='', company='Tech Innovations Inc.', category='', description='', randomize=True):
+def get_interview_bundle(job=None, role_title='', company='Tech Innovations Inc.', category='', description='', randomize=True, mode='f2f'):
     """Generates customized Face-to-Face and Technical coding challenges for a specific job."""
     if job:
         role_title = job.title
@@ -1594,17 +2166,27 @@ def get_interview_bundle(job=None, role_title='', company='Tech Innovations Inc.
     matched_challenges = [c for c in CODING_CHALLENGES if dom_key in c['domain_affinity']]
     if not matched_challenges:
         matched_challenges = CODING_CHALLENGES
-    challenge = random.choice(matched_challenges) if matched_challenges else CODING_CHALLENGES[0]
+
+    # Sample multiple diverse challenges for the technical round (dynamic non-repeating on every retry!)
+    if randomize and len(matched_challenges) > 1:
+        sample_size = min(3, len(matched_challenges))
+        selected_challenges = random.sample(matched_challenges, sample_size)
+    else:
+        selected_challenges = matched_challenges[:3]
+
+    primary_challenge = selected_challenges[0]
     
     return {
         'role_title': role_title,
         'company': company,
         'category': category,
+        'mode': mode,
         'domain_key': dom_key,
         'domain_badge': dom_meta['badge'],
         'domain_name': dom_meta['name'],
         'face_to_face_questions': f2f_questions,
-        'coding_challenge': challenge
+        'coding_challenge': primary_challenge,
+        'coding_challenges': selected_challenges
     }
 
 
@@ -2044,8 +2626,9 @@ def execute_code(language: str, code: str, custom_stdin: str = "") -> dict:
 # ==============================================================================
 # 6. AI SCORING & EVALUATION ENGINE
 # ==============================================================================
-def evaluate_candidate_session(bundle: dict, candidate_answers: list, code_submission: dict) -> dict:
+def evaluate_candidate_session(bundle: dict, candidate_answers: list, code_submission: dict, session_mode: str = None) -> dict:
     """Evaluates Face-to-Face answers and technical code execution to produce a comprehensive report."""
+    session_mode = session_mode or bundle.get('mode', 'full')
     f2f_questions = bundle.get('face_to_face_questions', [])
     
     # --- 1. Evaluate Face-to-Face Responses ---
@@ -2056,8 +2639,11 @@ def evaluate_candidate_session(bundle: dict, candidate_answers: list, code_submi
     
     for idx, q in enumerate(f2f_questions):
         answer = ""
-        if idx < len(candidate_answers):
-            answer = str(candidate_answers[idx] or "").strip()
+        if isinstance(candidate_answers, dict):
+            answer = str(candidate_answers.get(str(idx), candidate_answers.get(idx, "")) or "").strip()
+        elif isinstance(candidate_answers, (list, tuple)):
+            if idx < len(candidate_answers):
+                answer = str(candidate_answers[idx] or "").strip()
             
         word_count = len(answer.split())
         expected = q.get('expected_concepts', [])
@@ -2121,20 +2707,35 @@ def evaluate_candidate_session(bundle: dict, candidate_answers: list, code_submi
         
     code_score = max(min(code_score, 100), 20)
     
-    # --- 3. Compute Dimensions ---
-    comm_score = min(int(avg_f2f_score * 0.95 + 5), 100)
-    tech_score = min(int(avg_f2f_score * 0.6 + code_score * 0.4), 100)
-    problem_solving_score = min(int(avg_f2f_score * 0.4 + code_score * 0.6), 100)
-    
-    overall_score = int((comm_score * 0.25) + (tech_score * 0.35) + (problem_solving_score * 0.20) + (code_score * 0.20))
+    # --- 3. Compute Dimensions based on Session Mode ---
+    if session_mode == 'f2f':
+        # Pure Face-to-Face AI Mock Interview Evaluation
+        comm_score = min(int(avg_f2f_score * 0.95 + 5), 100)
+        tech_score = min(int(avg_f2f_score * 0.90 + 8), 100)
+        problem_solving_score = min(int(avg_f2f_score * 0.85 + 10), 100)
+        code_score = tech_score
+        overall_score = int((comm_score * 0.40) + (tech_score * 0.35) + (problem_solving_score * 0.25))
+    elif session_mode == 'technical':
+        # Pure Technical Coding Round Evaluation
+        problem_solving_score = min(int(code_score * 0.90 + 10), 100)
+        tech_score = min(int(code_score * 0.85 + 12), 100)
+        comm_score = min(int(code_score * 0.80 + 15), 100)
+        overall_score = int((code_score * 0.45) + (problem_solving_score * 0.30) + (tech_score * 0.25))
+    else:
+        # Full Combined Dual-Round
+        comm_score = min(int(avg_f2f_score * 0.95 + 5), 100)
+        tech_score = min(int(avg_f2f_score * 0.6 + code_score * 0.4), 100)
+        problem_solving_score = min(int(avg_f2f_score * 0.4 + code_score * 0.6), 100)
+        overall_score = int((comm_score * 0.25) + (tech_score * 0.35) + (problem_solving_score * 0.20) + (code_score * 0.20))
+
     overall_score = min(max(overall_score, 30), 100)
     
     # Status / Recommendation
     if overall_score >= 85:
-        recommendation = "🌟 Strong Hire - Outstanding Performance across Behavioral and Technical Rounds."
+        recommendation = "🌟 Strong Hire - Outstanding Performance across Assessment Criteria."
         grade = "A+"
     elif overall_score >= 70:
-        recommendation = "✅ Hire - Solid Technical Foundations and Good Verbal Articulation."
+        recommendation = "✅ Hire - Solid Foundations and Clear Domain Competence."
         grade = "B+"
     elif overall_score >= 50:
         recommendation = "⚠️ Potential Match - Needs Additional Practice on Edge Cases & Deep Technical Concepts."
@@ -2164,6 +2765,7 @@ def evaluate_candidate_session(bundle: dict, candidate_answers: list, code_submi
     return {
         'role_title': bundle.get('role_title'),
         'company': bundle.get('company'),
+        'session_mode': session_mode,
         'overall_score': overall_score,
         'grade': grade,
         'recommendation': recommendation,

@@ -631,9 +631,10 @@ def interview_hub():
 @app.route('/interview/<int:job_id>')
 @login_required
 def start_job_interview(job_id):
-    """Launches the dual-round interview room tailored for a specific job."""
+    """Launches the interview room tailored for a specific job."""
+    mode = request.args.get('mode', 'f2f')
     job = Job.query.get_or_404(job_id)
-    bundle = interview_engine.get_interview_bundle(job=job)
+    bundle = interview_engine.get_interview_bundle(job=job, mode=mode)
     return render_template(
         'interview_room.html',
         job=job,
@@ -648,6 +649,7 @@ def start_custom_interview():
     """Launches interview room for a selected domain track or custom role."""
     track = request.args.get('track', 'backend')
     role = request.args.get('role', '')
+    mode = request.args.get('mode', 'f2f')
     
     default_roles = {
         'backend': 'Senior Backend Engineer (Python / Java / Go)',
@@ -664,7 +666,7 @@ def start_custom_interview():
     }
     
     chosen_role = role if role else default_roles.get(track, 'Software Engineer')
-    bundle = interview_engine.get_interview_bundle(role_title=chosen_role, category=track.capitalize())
+    bundle = interview_engine.get_interview_bundle(role_title=chosen_role, category=track.capitalize(), mode=mode)
     return render_template(
         'interview_room.html',
         job=None,
@@ -703,7 +705,8 @@ def api_submit_interview():
         job = db.session.get(Job, job_id) if job_id else None
         bundle = interview_engine.get_interview_bundle(job=job, role_title=role_title, company=company, randomize=False)
     
-    evaluation = interview_engine.evaluate_candidate_session(bundle, answers, code_submission)
+    session_mode = data.get('mode') or (bundle.get('mode') if isinstance(bundle, dict) else 'full')
+    evaluation = interview_engine.evaluate_candidate_session(bundle, answers, code_submission, session_mode=session_mode)
     
     if current_user.is_authenticated:
         try:
