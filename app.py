@@ -653,7 +653,7 @@ def api_submit_interview():
     answers = data.get('answers', [])
     code_submission = data.get('code_submission', {})
     
-    job = Job.query.get(job_id) if job_id else None
+    job = db.session.get(Job, job_id) if job_id else None
     bundle = interview_engine.get_interview_bundle(job=job, role_title=role_title, company=company)
     
     evaluation = interview_engine.evaluate_candidate_session(bundle, answers, code_submission)
