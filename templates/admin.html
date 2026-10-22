@@ -184,7 +184,7 @@
         <div class="text-muted small">
             Showing Page <strong>{{ employers_pag.page }}</strong> of <strong>{{ employers_pag.pages }}</strong> ({{ employers_pag.total }} employers)
         </div>
-        <ul class="custom-pagination-list">
+        <ul class="custom-pagination-list list-unstyled mb-0">
             {% if employers_pag.has_prev %}
                 <li><a href="{{ url_for('admin_dashboard', emp_page=employers_pag.prev_num, app_page=applications_pag.page, job_page=jobs_pag.page) }}" class="pagination-btn">← Prev</a></li>
             {% else %}
@@ -312,7 +312,7 @@
         <div class="text-muted small">
             Showing Page <strong>{{ applications_pag.page }}</strong> of <strong>{{ applications_pag.pages }}</strong> ({{ applications_pag.total }} applications)
         </div>
-        <ul class="custom-pagination-list">
+        <ul class="custom-pagination-list list-unstyled mb-0">
             {% if applications_pag.has_prev %}
                 <li><a href="{{ url_for('admin_dashboard', app_page=applications_pag.prev_num, emp_page=employers_pag.page, job_page=jobs_pag.page) }}" class="pagination-btn">← Prev</a></li>
             {% else %}
@@ -388,7 +388,7 @@
         <div class="text-muted small">
             Showing Page <strong>{{ jobs_pag.page }}</strong> of <strong>{{ jobs_pag.pages }}</strong> ({{ jobs_pag.total }} listings)
         </div>
-        <ul class="custom-pagination-list">
+        <ul class="custom-pagination-list list-unstyled mb-0">
             {% if jobs_pag.has_prev %}
                 <li><a href="{{ url_for('admin_dashboard', job_page=jobs_pag.prev_num, emp_page=employers_pag.page, app_page=applications_pag.page) }}" class="pagination-btn">← Prev</a></li>
             {% else %}

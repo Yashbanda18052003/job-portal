@@ -527,6 +527,15 @@ body {
     gap: 6px;
     margin: 0;
     padding: 0;
+    list-style: none;
+    list-style-type: none;
+}
+
+.custom-pagination-list li {
+    list-style: none;
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
 }
 
 .pagination-btn {
