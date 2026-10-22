@@ -588,6 +588,41 @@ def interview_hub():
             'badge': '📱 Mobile Engineering',
             'desc': 'Offline caching, mobile lifecycle management, memory leaks, and mobile algorithmic challenges.',
             'role': 'Mobile Application Engineer (iOS / Android / Flutter)'
+        },
+        {
+            'key': 'php',
+            'title': 'PHP & Web Development',
+            'badge': '🐘 PHP Backend',
+            'desc': 'MVC architecture, Laravel/Symfony APIs, PDO prepared statements, security, and backend algorithms.',
+            'role': 'Senior PHP & Laravel Backend Engineer'
+        },
+        {
+            'key': 'sql',
+            'title': 'SQL & Database Architecture',
+            'badge': '🗄️ SQL & Databases',
+            'desc': 'Relational data modeling, indexing, complex JOINs, aggregations, window functions, and execution plans.',
+            'role': 'Database Administrator & SQL Architect'
+        },
+        {
+            'key': 'html_css',
+            'title': 'HTML5 & CSS3 UI Engineering',
+            'badge': '🌐 HTML5 & CSS3',
+            'desc': 'Semantic HTML5, CSS Flexbox & Grid, responsive layout design, and live browser sandbox preview.',
+            'role': 'Frontend UI Specialist (HTML5 / CSS3 / Responsive Design)'
+        },
+        {
+            'key': 'dart',
+            'title': 'Dart & Flutter Engineering',
+            'badge': '🎯 Dart & Flutter',
+            'desc': 'Single-threaded event loop, streams, Futures, state management, and cross-platform mobile logic.',
+            'role': 'Flutter & Dart Mobile Engineer'
+        },
+        {
+            'key': 'swift',
+            'title': 'Swift & iOS Development',
+            'badge': '🍎 Swift & iOS',
+            'desc': 'Automatic Reference Counting (ARC), retain cycles, modern Swift Concurrency, and iOS architecture.',
+            'role': 'Senior Native iOS Developer (Swift / SwiftUI)'
         }
     ]
     return render_template('interview_hub.html', jobs=jobs, user_interviews=user_interviews, tracks=tracks)
@@ -618,7 +653,12 @@ def start_custom_interview():
         'fullstack': 'Full-Stack Web Developer',
         'data_ai': 'Data Scientist & AI Specialist',
         'devops': 'DevOps & Cloud Infrastructure Engineer',
-        'mobile': 'Mobile Application Engineer'
+        'mobile': 'Mobile Application Engineer',
+        'php': 'Senior PHP & Laravel Backend Engineer',
+        'sql': 'Database Administrator & SQL Architect',
+        'html_css': 'Frontend UI Specialist (HTML5 / CSS3 / Responsive Design)',
+        'dart': 'Flutter & Dart Mobile Engineer',
+        'swift': 'Senior Native iOS Developer (Swift / SwiftUI)'
     }
     
     chosen_role = role if role else default_roles.get(track, 'Software Engineer')

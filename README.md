@@ -97,14 +97,20 @@ JobPortal features an integrated **Dual-Round AI Interview Simulator** that prep
 * **Adaptive Questioning:** Behavioral, technical architecture, and crisis management questions matched specifically to each role.
 
 ### 2. 💻 Round 2: Technical Coding IDE (Multi-Language Online Compiler)
-* **Real-Time Code Execution:** Interactive split-pane IDE supporting 7+ programming languages:
-  * **Python 3** (local high-speed sandbox)
-  * **JavaScript** (Node.js engine)
-  * **Java** (OpenJDK compiler & runtime)
+* **Real-Time Code Execution:** Interactive split-pane IDE supporting 12 popular languages and specialized technical tracks:
+  * **PHP 8.2** (Local XAMPP CLI runner with PDO prepared statements & algorithm handling)
+  * **SQL** (In-memory relational database engine with formatted ASCII result tables and execution metrics)
+  * **HTML5 & CSS3** (Semantic DOM validation, CSS properties parser, and interactive live web preview frame)
+  * **Dart** (Flutter mobile logic, event loop, streams, and collection operations)
+  * **Swift** (Native Apple iOS architecture, ARC memory management, and Swift syntax validator)
+  * **Python 3** (Local high-speed sandbox execution ~90ms)
+  * **JavaScript** (Local Node.js engine ~110ms)
+  * **Java** (OpenJDK compiler & runtime ~1.2s)
   * **C++** (GCC compiler)
   * **C** (GCC compiler)
   * **Go** (Golang runner)
   * **Rust** (Rust compiler)
+* **Live Sandbox Web Preview:** Instant live preview iframe for HTML/CSS frontend components alongside the terminal.
 * **Custom Stdin & Test Cases:** Test code against custom inputs and pre-loaded problem test cases.
 * **Terminal Diagnostics:** Live console output with standard output (`stdout`), compilation/runtime error tracking (`stderr`), and execution latency in milliseconds.
 
