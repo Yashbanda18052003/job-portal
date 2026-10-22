@@ -1,13 +1,15 @@
-# 💼 JobPortal — Modern Career & Hiring Web Application
+# 💼 JobPortal — Modern Career, Recruitment & AI Interview Platform
 
-[![Python](https://img.shields.io/badge/Python-3.10%2B-blue.svg?logo=python&logoColor=white)](https://www.python.org/)
-[![Flask](https://img.shields.io/badge/Flask-3.x-black.svg?logo=flask&logoColor=white)](https://flask.palletsprojects.com/)
+[![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB.svg?logo=python&logoColor=white)](https://www.python.org/)
+[![Flask](https://img.shields.io/badge/Flask-3.1-000000.svg?logo=flask&logoColor=white)](https://flask.palletsprojects.com/)
 [![SQLAlchemy](https://img.shields.io/badge/SQLAlchemy-ORM-red.svg)](https://www.sqlalchemy.org/)
-[![Bootstrap](https://img.shields.io/badge/Bootstrap-5.3-purple.svg?logo=bootstrap&logoColor=white)](https://getbootstrap.com/)
+[![Bootstrap](https://img.shields.io/badge/Bootstrap-5.3-7952B3.svg?logo=bootstrap&logoColor=white)](https://getbootstrap.com/)
 [![SQLite](https://img.shields.io/badge/Database-SQLite-003B57.svg?logo=sqlite&logoColor=white)](https://www.sqlite.org/)
+[![Chart.js](https://img.shields.io/badge/Analytics-Chart.js-FF6384.svg?logo=chartdotjs&logoColor=white)](https://www.chartjs.org/)
+[![Compilers](https://img.shields.io/badge/Compilers-12%20Languages-00C7B7.svg)](https://wandbox.org/)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
-A recruitment and job portal web application built with **Python**, **Flask**, and **SQLAlchemy**. Designed with a modern, high-contrast SaaS interface, role-based access control (RBAC), multi-criteria search & filtering, real-time application status tracking, secure PDF resume uploading, and custom in-page confirmation workflows.
+A recruitment and hiring web application built with **Python**, **Flask**, and **SQLAlchemy**. Featuring an electric modern SaaS theme, role-based access control (RBAC), interactive Chart.js graphical analytics, 5-record pagination, PDF resume uploading, and an **AI Interview Simulator with separated Face-to-Face Voice Mock and 12-Language Technical Coding Sessions**.
 
 ---
 
@@ -16,35 +18,57 @@ A recruitment and job portal web application built with **Python**, **Flask**, a
 - [📸 User Interface Showcase](#-user-interface-showcase)
 - [⚡ Quick Demo Credentials](#-quick-demo-credentials)
 - [🚀 Features by Role](#-features-by-role)
+- [🎯 AI Interview Practice System](#-ai-interview-practice-system)
+  - [1. 🎥 Face-to-Face AI Mock Interview](#1--face-to-face-ai-mock-interview-modef2f)
+  - [2. 💻 Technical Coding Round & Cloud IDE](#2--technical-coding-round--cloud-ide-modetechnical)
+  - [3. 🌟 Combined Dual Round](#3--combined-dual-round-modefull)
+  - [4. 🤖 AI Scoring & Competency Report](#4--ai-scoring--competency-report)
 - [🛠️ Tech Stack](#️-tech-stack)
 - [📂 Project Architecture](#-project-architecture)
 - [⚙️ Installation & Running Locally](#️-installation--running-locally)
 - [📊 Database Schema](#-database-schema)
-- [👤 Author](#-author)
+- [🔌 API Endpoints](#-api-endpoints)
+- [👤 Author & Contributions](#-author--contributions)
 
 ---
 
 ## ✨ Key Highlights
 
-- **🎨 Modern SaaS UI & Palette:** Electric Indigo & Cyber Violet branding with glassmorphic sticky navigation, responsive job cards, and ambient background lighting.
-- **🔍 Multi-Column Job Filtering:** Real-time keyword search, interactive category selector, location search, and 1-click **Trending Search Pills** (*Remote, Backend, Frontend, AI & Data*).
-- **🛡️ Custom In-Page Confirmation Modals:** Replaced native browser popups with custom frosted-glass confirmation dialogs for sign out, candidate decisions, and vacancy publishing.
-- **📁 Secure PDF Resume Uploads:** PDF file upload dropzone with client-side validation and collision-safe file naming (`resume_u{user_id}_j{job_id}_{timestamp}.pdf`).
-- **🔔 Toast Alert System:** Notification banners with animated status icons (`✓` Success, `✕` Danger, `⚠️` Warning, `ℹ️` Info) that smoothly auto-dismiss after 4.5 seconds.
-- **👥 Role-Based Access Control:** Distinct user flows for **Administrators**, verified **Employers**, and **Job Seekers**.
+- **🎨 Modern SaaS Design:** Electric Indigo, Cyber Violet, and Slate gradients with frosted glass navigation, ambient glow highlights, responsive job cards, and unified action buttons.
+- **🎯 Decoupled Interview Practice:** Candidates can independently choose **Face-to-Face AI Mock Interview** or **Technical Coding Round** or **Combined Dual Round** without forced transitions.
+- **⏱️ Zero-Pressure Controlled Timer:** Camera and microphone preview can be calibrated at ease—the practice timer stays stopped at `00:00` until the candidate explicitly clicks **"🚀 Start Session"**.
+- **💻 12-Language Cloud Compiler & IDE:** Full-featured split-pane editor with test cases supporting **Python, JavaScript, PHP 8.3, SQL (SQLite tables), HTML/CSS (Live Preview), Dart, Swift, Java, C++, C, Go, and Rust**.
+- **🔀 Dynamic Non-Repeating Questions:** Technical coding challenges and behavioral questions are dynamically sampled using `random.sample()` across retries, guaranteeing fresh questions every session.
+- **📊 Admin Visual Analytics & Pagination:** Interactive **Chart.js** graphical analytics (Application Status doughnut and Category breakdown bars), KPI metric cards, and clean **5-records-per-page** pagination without CSS artifacts.
+- **📄 Complete Resume Workflow:** Drag-and-drop PDF resume submission, collision-safe file naming, employer review dashboard, and instant 1-click **Accept / Reject** applicant decisions.
+- **🛡️ Protected Practice & RBAC:** Secure `@login_required` barriers ensuring candidates' mock scorecards and code histories are safely recorded to their profile.
 
 ---
 
 ## 📸 User Interface Showcase
 
-| 🌟 Home Page & Job Search | 🛡️ Administrator Dashboard |
+### 🌟 Modern Discovery & AI Practice Hub
+| 🏠 Modern Homepage & Practice Dropdown | 🎯 AI Interview Track Hub |
 | :---: | :---: |
-| ![Home Page](assets/screenshots/Home%20page-Job%20portal.png) | ![Admin Dashboard](assets/screenshots/Admin%20page-job%20portal.png) |
+| ![Homepage](assets/screenshots/01_home_modern.png) | ![Interview Hub](assets/screenshots/02_interview_hub.png) |
 
-| 🔐 Authentication & Role Registration | 🏢 Post New Vacancy |
+---
+
+### 🎥 Face-to-Face Mock & 💻 Technical IDE Simulator
+| 🎥 Face-to-Face AI Mock Interview | 💻 Multi-Language Cloud Compiler & IDE |
 | :---: | :---: |
-| ![Register Page](assets/screenshots/Register%20page-job%20portal.png) | ![Add Job Page](assets/screenshots/Add%20job%20page-job%20portal.png) |
+| ![AI Mock Room](assets/screenshots/03_f2f_ai_mock_room.png) | ![Technical Cloud IDE](assets/screenshots/04_technical_cloud_ide.png) |
 
+---
+
+### 🛡️ Administrative Oversight & Visual Analytics
+| 📊 Admin Interactive Analytics & Pagination | 🏢 Post New Job Vacancy |
+| :---: | :---: |
+| ![Admin Dashboard](assets/screenshots/05_admin_dashboard.png) | ![Add Job Page](assets/screenshots/Add%20job%20page-job%20portal.png) |
+
+---
+
+### 📬 Recruitment Workflow & Applications Tracking
 | 📄 Candidate Application View | 📬 Employer Applications Review |
 | :---: | :---: |
 | ![My Applications](assets/screenshots/User%20application%20view%20page-job%20portal.png) | ![Employer Review](assets/screenshots/Employer%20application%20view%20page%20-%20job%20portal.png) |
@@ -53,93 +77,111 @@ A recruitment and job portal web application built with **Python**, **Flask**, a
 
 ## ⚡ Quick Demo Credentials
 
-A default administrator account is automatically verified upon launching the application:
+A seed administrator account is verified automatically upon launching the application:
 
-| Role | Email Address | Password | Permissions |
+| Role | Email Address | Password | Capabilities |
 | :--- | :--- | :--- | :--- |
-| **Super Admin** | `admin@jobportal.com` | `admin123` | System monitoring, employer approval/revocation, full applicant records |
-| **Employer** | *(Register with "Hire Talent")* | *(Your password)* | Post vacancies, review incoming resumes, accept/reject candidates *(requires admin approval)* |
-| **Candidate** | *(Register with "Find a Job")* | *(Your password)* | Instant access to explore listings, upload PDF resume, track application status |
+| **Super Admin** | `admin@jobportal.com` | `admin123` | Visual Chart.js analytics, employer approval/revocation, 5-per-page job management, master candidate resume review |
+| **Hiring Employer** | *(Register as "Hire Talent")* | *(Your password)* | Post vacancies, review incoming candidate resumes, update status (*requires admin approval*) |
+| **Job Seeker** | *(Register as "Find a Job")* | *(Your password)* | Apply with PDF resume, track application status, take AI Mock & Technical practice sessions |
 
 ---
 
 ## 🚀 Features by Role
 
 ### 🛡️ Super Administrator
-* **KPI Metrics Overview:** Real-time counts of Candidates, Employers, Active Job Openings, and Resumes Submitted.
-* **Employer Verification:** Review pending employer registrations and approve or revoke posting permissions.
-* **Master Applications Oversight:** View all platform applications with direct access to inspect submitted PDF resumes.
-* **Status Decision Controls:** Transition application status across `Pending`, `Under Review`, `Accepted`, and `Rejected`.
+* **Graphical Visual Analytics:** Interactive Chart.js graphs displaying real-time application distribution and category metrics.
+* **KPI Metrics Counters:** Instant counters for Total Jobs, Total Candidates, Approved Applications, and Shortlist Ratio.
+* **Paginated Job Records:** Strict 5-record pagination with previous/next controls, clean page numbers, and zero visual bullet artifacts.
+* **Employer Verification:** Review pending employer registrations and grant/revoke job publishing privileges.
+* **Resume Inspection & Decisions:** Direct access to submitted PDF resumes with 1-click **Accept** and **Reject** status triggers.
 
 ### 🏢 Hiring Employer
-* **Interactive Registration:** Toggle between Candidate and Employer during sign up; dynamic company name requirement.
-* **Publish Vacancies:** Create listings with job title, compensation range, location, category suggestions, and detailed descriptions.
-* **Received Applications Dashboard:** Dedicated employer portal to review candidates who applied for their specific openings with instant resume downloads.
-* **Status Updates:** Update applicants directly to `Under Review`, `Accepted`, or `Rejected`.
+* **Role Switcher Registration:** Dedicated employer signup flow with company profile linking.
+* **Publish Vacancies:** Create listings with job title, salary range, location, industry domain, and rich job specifications.
+* **Applicant Review Dashboard:** Private employer portal to inspect applicants for each active listing with downloadable resumes.
+* **Decision Controls:** Move candidates seamlessly through `Under Review`, `Accepted`, and `Rejected` statuses.
 
 ### 👤 Job Seeker / Candidate
-* **Explore Openings:** Filter by keyword, category, location, or click popular trending search tags.
-* **Seamless Application:** Two-column apply view with full job details and a PDF dropzone with live filename preview.
-* **Duplicate Application Prevention:** Prevents accidental double submissions for the same role.
-* **Application Tracker:** Personal dashboard displaying real-time application status badges (`⏳ Pending Review`, `🔍 Under Review`, `✓ Accepted`, `✕ Not Selected`).
+* **Smart Search & Trending Filters:** Filter openings by keyword, category, location, or click popular trending search pills (*Remote, Backend, Frontend, AI & Data*).
+* **PDF Resume Uploading:** File dropzone with client-side format validation and filename preview.
+* **Application Tracker:** Personal dashboard displaying real-time application badges (`⏳ Pending Review`, `🔍 Under Review`, `✓ Accepted`, `✕ Not Selected`).
+* **Personal Scorecard History:** Revisit completed AI practice sessions, grades, and detailed feedback under `My Scorecards`.
 
 ---
 
-## 🎯 AI Mock Interview & Multi-Language Compiler System
+## 🎯 AI Interview Practice System
 
-JobPortal features an integrated **Dual-Round AI Interview Simulator** that prepares candidates before actual interviews:
+JobPortal offers a practice ecosystem designed to help candidates prepare for real-world technical and behavioral screenings:
 
-### 1. 🎥 Round 1: Face-to-Face AI Interview Simulator
-* **Live Webcam Self-View:** Real-time candidate video streaming with camera and microphone controls.
-* **AI Recruiter Persona (Voice & Waveform):** Interactive animated AI avatar with responsive audio soundwave visualization.
-* **Spoken AI Questions:** Browser Text-to-Speech (TTS via Web Speech API) speaks questions aloud with natural pacing.
-* **Speech-to-Text Voice Recording:** Candidates can speak their responses into their microphone; speech is transcribed in real-time, or they can type and edit their answers directly.
-* **Adaptive Questioning:** Behavioral, technical architecture, and crisis management questions matched specifically to each role.
+```
+                  ┌─────────────────────────────────────────┐
+                  │          Job Card / Practice            │
+                  └────────────────────┬────────────────────┘
+                                       │
+            ┌──────────────────────────┼──────────────────────────┐
+            ▼                          ▼                          ▼
+   [ ?mode=f2f ]              [ ?mode=technical ]            [ ?mode=full ]
+ 🎥 Face-to-Face AI         💻 Technical Coding Round     🌟 Combined Dual Round
+  - Live Webcam & Mic        - 12 Language Compilers       - Stage 1: Face-to-Face
+  - Animated Audio Waves     - Challenge Switcher (Q1-Q3)  - Stage 2: Technical IDE
+  - Speech Recognition       - Dynamic Random Problems     - Comprehensive Report
+  - Direct Completion        - Instant Terminal Output
+```
 
-### 2. 💻 Round 2: Technical Coding IDE (Multi-Language Online Compiler)
-* **Real-Time Code Execution:** Interactive split-pane IDE supporting 12 popular languages and specialized technical tracks:
-  * **PHP 8.2** (Local XAMPP CLI runner with PDO prepared statements & algorithm handling)
-  * **SQL** (In-memory relational database engine with formatted ASCII result tables and execution metrics)
-  * **HTML5 & CSS3** (Semantic DOM validation, CSS properties parser, and interactive live web preview frame)
-  * **Dart** (Flutter mobile logic, event loop, streams, and collection operations)
-  * **Swift** (Native Apple iOS architecture, ARC memory management, and Swift syntax validator)
-  * **Python 3** (Local high-speed sandbox execution ~90ms)
-  * **JavaScript** (Local Node.js engine ~110ms)
-  * **Java** (OpenJDK compiler & runtime ~1.2s)
-  * **C++** (GCC compiler)
-  * **C** (GCC compiler)
-  * **Go** (Golang runner)
-  * **Rust** (Rust compiler)
-* **Live Sandbox Web Preview:** Instant live preview iframe for HTML/CSS frontend components alongside the terminal.
-* **Custom Stdin & Test Cases:** Test code against custom inputs and pre-loaded problem test cases.
-* **Terminal Diagnostics:** Live console output with standard output (`stdout`), compilation/runtime error tracking (`stderr`), and execution latency in milliseconds.
+### 1. 🎥 Face-to-Face AI Mock Interview (`?mode=f2f`)
+* **Camera & Audio Sandbox:** Calibrate webcam and microphone with real-time waveform visualization before beginning.
+* **Controlled Start Button:** Timer stays safely at `00:00` until you click **"🚀 Start Interview Session"**.
+* **Dual Speech Interaction:**
+  * **AI Voice Synthesis:** The AI interviewer speaks questions aloud with natural voice inflection.
+  * **Voice Speech-to-Text:** Live transcription captures spoken answers via the Web Speech API with an in-place typing fallback.
+* **Dynamic Non-Repeating Prompts:** Evaluates STAR method behavioral situations, system resilience, and architectural patterns selected dynamically per attempt.
+* **Independent Finish:** Click **"🏆 Complete Mock Interview"** to get your verbal scorecard directly—**no coding round forced**.
 
-### 3. 🤖 Instant AI Performance Report & Scorecard
-* **Overall Score (0-100)** with letter grades (`A+`, `B+`, etc.) and actionable hiring recommendations.
+### 2. 💻 Technical Coding Round & Cloud IDE (`?mode=technical`)
+* **Pre-Session Readiness Banner:** Read problem specifications and constraints before clicking **"🚀 Start Technical Session"** to start the clock.
+* **12 Supported Execution Compilers:**
+  1. **Python 3** (High-speed local execution)
+  2. **JavaScript** (Node.js engine)
+  3. **PHP 8.3** (Associative arrays, recursion & algorithmic handlers)
+  4. **SQL** (In-memory SQLite with pre-populated tables & ASCII result output)
+  5. **HTML/CSS** (Live interactive web preview frame)
+  6. **Dart** (Dart 3 environment with structure & entrypoint analysis)
+  7. **Swift** (Swift 5 compiler & runtime)
+  8. **Java** (OpenJDK Cloud runner)
+  9. **C++** (GCC Cloud runner)
+  10. **C** (GCC Cloud runner)
+  11. **Go** (Golang Cloud runner)
+  12. **Rust** (Rust Cloud runner)
+* **Multi-Challenge Switcher (Q1, Q2, Q3):** Switch seamlessly between problems using quick tabs; written code is preserved per problem.
+* **Dynamic Algorithmic Bank:** Includes *Valid Parentheses*, *Merge Intervals*, *Reverse Words*, *SQL Top Earners with DENSE_RANK*, *PHP Array Normalization*, *Dart Streams*, *Swift Common Prefix*, and *DevOps Log Parsing*.
+
+### 3. 🌟 Combined Dual Round (`?mode=full`)
+* Candidates complete both the verbal AI screening and the technical coding test for a full 360-degree assessment.
+
+### 4. 🤖 AI Scoring & Competency Report
+* **Mode-Specific Calculations:** Evaluates performance accurately based on the active session mode without penalizing skipped rounds.
 * **Four-Dimension Diagnostic Breakdown:**
-  * Communication & Articulation
-  * Technical Architecture & Concepts
-  * Problem Solving & Algorithmic Logic
-  * Code Correctness & Compilation
-* **Personalized Strengths & Improvement Opportunities.**
-* **Persistent History:** Registered candidates can revisit past scorecards and review model answers anytime under `My Scorecards`.
-
-### ⚡ How Newly Posted Jobs are Handled:
-When an employer or admin publishes a new job vacancy:
-1. **Dynamic Domain & Keyword Extraction:** The system inspects the job's `title`, `category`, and `description` to identify core competencies (Backend, Frontend, Full-Stack, AI & Data, DevOps, Mobile).
-2. **Dynamic Interview Question Generation:** It personalizes behavioral and architectural questions using the job title and company name, and assigns relevant domain focus areas.
-3. **Targeted Technical Challenge Mapping:** It pairs the job with an appropriate algorithmic or system problem, automatically pre-loading working starter boilerplate in all 7 programming languages.
-4. **Immediate Availability:** The job card automatically displays a **"🎯 Practice Interview"** button linking directly to `/interview/<job_id>`.
+  * 🗣️ **Verbal Communication & STAR Quality**
+  * 🏛️ **Technical Architecture & Keyword Depth**
+  * 🧩 **Problem Solving & Algorithmic Approach**
+  * 💻 **Code Correctness & Compilation Sanitation**
+* **Scorecard Modal:** Provides overall score (0–100), letter grade (`A+`, `B+`, `C`, `D`), hiring verdict (*Strong Hire*, *Hire*, *Potential Match*, *Needs Preparation*), strengths, and targeted improvement suggestions.
 
 ---
 
 ## 🛠️ Tech Stack
 
-* **Backend Framework:** [Flask 3.x](https://flask.palletsprojects.com/) (Python)
-* **Database & ORM:** [Flask-SQLAlchemy](https://flask-sqlalchemy.palletsprojects.com/) with [SQLite](https://www.sqlite.org/)
-* **Authentication:** [Flask-Login](https://flask-login.readthedocs.io/) & [Werkzeug Security](https://werkzeug.palletsprojects.com/) (Password Hashing)
-* **Frontend UI:** HTML5, CSS3, JavaScript, [Bootstrap 5.3](https://getbootstrap.com/), [Plus Jakarta Sans](https://fonts.google.com/specimen/Plus+Jakarta+Sans) Google Font
-* **File Handling:** Secure PDF resume uploads via Werkzeug `secure_filename`
+| Category | Technology |
+| :--- | :--- |
+| **Backend Framework** | [Flask 3.1](https://flask.palletsprojects.com/) (Python) |
+| **Database & ORM** | [Flask-SQLAlchemy 3.1](https://flask-sqlalchemy.palletsprojects.com/) & [SQLite](https://www.sqlite.org/) |
+| **Authentication & RBAC** | [Flask-Login 0.6](https://flask-login.readthedocs.io/) & [Flask-Bcrypt](https://flask-bcrypt.readthedocs.io/) |
+| **Frontend UI & Styling** | [Bootstrap 5.3](https://getbootstrap.com/), HTML5, Modern CSS Variables, Plus Jakarta Sans |
+| **Data Visualization** | [Chart.js 4.x](https://www.chartjs.org/) |
+| **Cloud Compilers** | Wandbox API, Node.js, CPython, SQLite In-Memory Engine |
+| **Browser APIs** | Web Audio API (AnalyserNode), Web Speech API (`SpeechRecognition` & `SpeechSynthesis`) |
+| **File Handling** | Werkzeug `secure_filename` (PDF resume storage) |
 
 ---
 
@@ -147,45 +189,61 @@ When an employer or admin publishes a new job vacancy:
 
 ```
 job-portal/
-├── app.py                      # Application factory, database models & route controllers
-├── config.py                   # Flask & SQLAlchemy configuration
-├── interview_engine.py         # AI question generator, multi-language compiler & evaluation
-├── requirements.txt            # Python dependencies
-├── run_app.bat                 # 1-Click Windows startup launcher
-├── README.md                   # Project documentation
-│
-├── assets/
-│   └── screenshots/            # UI screenshots for documentation
-│
-├── instance/
-│   └── jobportal.db            # SQLite database file (auto-initialized)
-│
-├── static/
-│   ├── css/
-│   │   ├── base.css            # Design tokens, glassmorphic navbar, toasts & modal dialogs
-│   │   ├── index.css           # Hero section, floating search card, job grid & avatars
-│   │   ├── forms.css           # Auth cards, role switcher tiles & form controls
-│   │   ├── admin.css           # Metric KPI cards & administrative data tables
-│   │   ├── application.css     # PDF dropzone, application status badges & tracking
-│   │   └── interview.css       # Webcam feed, speech waves, IDE & terminal styles
-│   ├── js/
-│   │   ├── base.js             # Legacy query param toast handler
-│   │   └── register.js         # Interactive role switcher logic
-│   └── resumes/                # Secure storage for uploaded candidate PDF resumes
-│
-└── templates/
-    ├── base.html               # Master layout (Navbar, Toasts, Confirmation Modal, Footer)
-    ├── index.html              # Home page with search, trending tags & job listings
-    ├── login.html              # Clean authentication page
-    ├── register.html           # Role selection registration (Candidate vs. Employer)
-    ├── post_job.html           # Job vacancy creation form
-    ├── apply_job.html          # Two-column job description & resume upload dropzone
-    ├── my_applications.html    # Candidate application tracking dashboard
-    ├── applications.html       # Employer received applications & decision controls
-    ├── admin.html              # Superuser administration dashboard
-    ├── interview_hub.html      # AI Mock Interview portal & track selection
-    ├── interview_room.html     # Dual-round live simulator (Webcam + IDE Compiler)
-    └── my_interviews.html      # Historical interview performance scorecards
+|-- .env.example                # Sample environment configuration
+|-- .gitignore                  # Git ignore rules for venv, db, and cache
+|-- README.md                   # Comprehensive documentation & setup guide
+|-- app.py                      # Application factory, DB models & route controllers
+|-- config.py                   # Flask & SQLAlchemy database configuration
+|-- interview_engine.py         # AI question generator, 12 compilers & scoring
+|-- requirements.txt            # Python dependencies
+|-- run_app.bat                 # 1-Click Windows startup launcher
+|
+|-- assets/
+|   +-- screenshots/            # High-resolution UI showcase images
+|       |-- 01_home_modern.png
+|       |-- 02_interview_hub.png
+|       |-- 03_f2f_ai_mock_room.png
+|       |-- 04_technical_cloud_ide.png
+|       |-- 05_admin_dashboard.png
+|       |-- Add job page-job portal.png
+|       |-- Admin page-job portal.png
+|       |-- Employer application view page - job portal.png
+|       |-- Home page-Job portal.png
+|       |-- Login page-job portal.png
+|       |-- Register page-job portal.png
+|       +-- User application view page-job portal.png
+|
+|-- instance/
+|   +-- jobportal.db            # SQLite database file (auto-seeded on launch)
+|
+|-- static/
+|   |-- css/
+|   |   |-- admin.css           # Metric KPI cards & administrative data tables
+|   |   |-- application.css     # PDF dropzone & application status tracking
+|   |   |-- base.css            # Modern design tokens, navbar, toasts & modals
+|   |   |-- forms.css           # Authentication cards & role switcher tiles
+|   |   |-- index.css           # Hero section, search filters & job cards
+|   |   +-- interview.css       # Webcam feed, soundwave animation, IDE & terminal
+|   |-- images/
+|   |-- js/
+|   |   |-- base.js             # Notification toasts & modal helpers
+|   |   +-- register.js         # Interactive role selection logic
+|   +-- resumes/                # Uploaded candidate PDF resumes
+|       +-- .gitkeep
+|
++-- templates/
+    |-- admin.html              # Superuser dashboard with Chart.js & pagination
+    |-- applications.html       # Employer received applications & decision controls
+    |-- apply_job.html          # Two-column job description & PDF upload dropzone
+    |-- base.html               # Master layout with navigation & flash toasts
+    |-- index.html              # Homepage with search filters & Practice dropdown
+    |-- interview_hub.html      # AI Mock Interview track portal
+    |-- interview_room.html     # Mode-aware simulator (F2F Voice Room & Cloud IDE)
+    |-- login.html              # User login page
+    |-- my_applications.html    # Candidate application tracker
+    |-- my_interviews.html      # Candidate historical interview scorecards
+    |-- post_job.html           # Job vacancy publishing form
+    +-- register.html           # Role selection registration (Candidate vs Employer)
 ```
 
 ---
@@ -202,18 +260,18 @@ git clone https://github.com/Yashbanda18052003/job-portal.git
 cd job-portal
 ```
 
-### 2. Set Up a Virtual Environment
+### 2. Create and Activate a Virtual Environment
 ```bash
-# Windows
+# Windows (PowerShell / Command Prompt)
 python -m venv env
-env\Scripts\activate
+.\env\Scripts\activate
 
 # macOS / Linux
 python3 -m venv env
 source env/bin/activate
 ```
 
-### 3. Install Required Dependencies
+### 3. Install Python Dependencies
 ```bash
 pip install -r requirements.txt
 ```
@@ -221,19 +279,20 @@ pip install -r requirements.txt
 ### 4. Run the Application
 
 **Option A — Windows 1-Click Launcher:**
-Double-click `run_app.bat` in the root folder.
+Double-click `run_app.bat` in the project root directory.
 
-**Option B — Terminal:**
+**Option B — Command Line:**
 ```bash
 python app.py
 ```
 
-Open your browser and navigate to:
+### 5. Access the Web Application
+Open your web browser and visit:
 ```
 http://127.0.0.1:5000
 ```
 
-> **Note:** The SQLite database and seed administrator (`admin@jobportal.com` / `admin123`) are automatically initialized on the first application launch.
+> **Automatic Setup:** The SQLite database (`instance/jobportal.db`) and default administrator account (`admin@jobportal.com` / `admin123`) are initialized automatically on first startup.
 
 ---
 
@@ -243,7 +302,9 @@ http://127.0.0.1:5000
 erDiagram
     USER ||--o{ JOB : posts
     USER ||--o{ APPLICATION : submits
+    USER ||--o{ MOCK_INTERVIEW : completes
     JOB ||--o{ APPLICATION : receives
+    JOB ||--o{ MOCK_INTERVIEW : links
 
     USER {
         int id PK
@@ -278,12 +339,45 @@ erDiagram
         string status
         datetime applied_on
     }
+
+    MOCK_INTERVIEW {
+        int id PK
+        int user_id FK
+        int job_id FK
+        string role_title
+        string company
+        int score
+        string grade
+        int communication_score
+        int technical_score
+        int problem_solving_score
+        int code_score
+        text feedback_summary
+        datetime created_at
+    }
 ```
 
 ---
 
-## 👤 Author
+## 🔌 API Endpoints
+
+| Method | Endpoint | Description | Access |
+| :--- | :--- | :--- | :--- |
+| `GET` | `/` | Homepage with job search, filters & practice dropdown | Public |
+| `GET` | `/interview_hub` | AI practice domain tracks & role selector | Public |
+| `GET` | `/interview/<job_id>?mode={f2f\|technical\|full}` | Mode-aware live interview simulation room | Login Required |
+| `POST` | `/api/compile-run` | Compile & execute code across 12 languages | Login Required |
+| `POST` | `/api/submit-interview` | Submit interview responses & compute AI score | Login Required |
+| `GET` | `/my-interviews` | Candidate's historical scorecards & feedback | Candidate |
+| `GET` | `/admin/dashboard?page={n}` | Admin analytics with Chart.js & 5-record pagination | Super Admin |
+| `POST` | `/admin/applicant/<id>/<status>` | Update candidate application decision | Super Admin / Employer |
+
+---
+
+## 👤 Author & Contributions
 
 **Yash Banda**  
 * GitHub: [@Yashbanda18052003](https://github.com/Yashbanda18052003)  
 * LinkedIn: [linkedin.com/in/yash-banda-829633259](https://www.linkedin.com/in/yash-banda-829633259/)
+
+Contributions, feedback, and issue reports are always welcome! Feel free to open a pull request or submit an issue on the [GitHub repository](https://github.com/Yashbanda18052003/job-portal).
