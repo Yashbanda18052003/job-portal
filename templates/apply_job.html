@@ -24,6 +24,20 @@
                     <span class="meta-chip salary">💰 {{ job.salary }}</span>
                 {% endif %}
             </div>
+
+            <!-- AI INTERVIEW SIMULATION PROMPT BANNER -->
+            <div class="interview-prep-callout mt-3 p-3 rounded-3 d-flex align-items-center justify-content-between">
+                <div class="d-flex align-items-center gap-3">
+                    <span class="fs-2">🎯</span>
+                    <div>
+                        <div class="fw-bold text-dark">Practice AI Mock Interview for this Job</div>
+                        <div class="text-muted small">Face-to-Face webcam questions & live multi-language coding challenge.</div>
+                    </div>
+                </div>
+                <a href="{{ url_for('start_job_interview', job_id=job.id) }}" class="btn-prep-now">
+                    Start Mock Interview &rarr;
+                </a>
+            </div>
         </div>
 
         <div>

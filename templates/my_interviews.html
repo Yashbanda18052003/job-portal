@@ -1,0 +1,168 @@
+{% extends 'base.html' %}
+
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/application.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/interview.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom">
+    <div>
+        <h2 class="fw-bold mb-1" style="font-size: 1.6rem; color: var(--secondary);">My AI Interview Scorecards</h2>
+        <p class="text-muted small mb-0">Review performance analytics, AI evaluations, and model answers from your practice rounds.</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="{{ url_for('interview_hub') }}" class="btn btn-primary px-3 py-2 fw-semibold" style="background: var(--primary); border: none; border-radius: var(--radius-sm); font-size: 0.875rem;">
+            🎯 Launch New Interview Practice
+        </a>
+    </div>
+</div>
+
+{% if interviews %}
+<div class="applications-table-card shadow-sm p-0 overflow-hidden mb-4">
+    <div class="table-responsive">
+        <table class="custom-table mb-0">
+            <thead>
+                <tr>
+                    <th>Role & Company</th>
+                    <th>Date Completed</th>
+                    <th>Overall Score</th>
+                    <th>Grade</th>
+                    <th>Communication</th>
+                    <th>Technical Depth</th>
+                    <th>Coding Round</th>
+                    <th>Details</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in interviews %}
+                {% set mi = row.item %}
+                {% set fb = row.feedback %}
+                <tr>
+                    <td>
+                        <strong class="text-dark">{{ mi.role_title }}</strong>
+                        <div class="text-muted small" style="font-size: 0.775rem;">🏢 {{ mi.company }}</div>
+                    </td>
+                    <td class="text-muted small">
+                        {{ mi.created_at.strftime('%b %d, %Y • %I:%M %p') }}
+                    </td>
+                    <td>
+                        <span class="badge bg-primary px-3 py-2 rounded-pill fw-bold" style="font-size: 0.9rem;">
+                            {{ mi.score }} / 100
+                        </span>
+                    </td>
+                    <td>
+                        <span class="badge bg-success-subtle text-success px-2 py-1 rounded fw-bold" style="font-size: 0.85rem;">
+                            Grade {{ mi.grade or 'B' }}
+                        </span>
+                    </td>
+                    <td>
+                        <div class="small fw-bold">{{ mi.communication_score }}%</div>
+                    </td>
+                    <td>
+                        <div class="small fw-bold">{{ mi.technical_score }}%</div>
+                    </td>
+                    <td>
+                        <div class="small fw-bold">{{ mi.code_score }}%</div>
+                    </td>
+                    <td>
+                        <button type="button" class="btn btn-sm btn-outline-primary fw-bold" data-bs-toggle="collapse" data-bs-target="#report-{{ mi.id }}">
+                            View Report &darr;
+                        </button>
+                    </td>
+                </tr>
+
+                <!-- Collapsible Detailed Report Row -->
+                <tr class="collapse bg-light" id="report-{{ mi.id }}">
+                    <td colspan="8" class="p-4">
+                        <div class="card border-0 shadow-sm p-3 rounded-3 bg-white">
+                            <h5 class="fw-bold mb-3" style="color: var(--secondary);">AI Diagnostic Feedback for {{ mi.role_title }}</h5>
+                            
+                            {% if fb.recommendation %}
+                                <div class="alert alert-info py-2 px-3 small fw-bold mb-3">
+                                    {{ fb.recommendation }}
+                                </div>
+                            {% endif %}
+
+                            <div class="row g-3 mb-3">
+                                <div class="col-md-6">
+                                    <div class="p-3 bg-success-subtle rounded-3 border border-success-subtle">
+                                        <h6 class="fw-bold text-success mb-2">🌟 Demonstrated Strengths</h6>
+                                        <ul class="small mb-0 ps-3">
+                                            {% for s in fb.strengths or ['Clear verbal articulation', 'Structured answers'] %}
+                                                <li>{{ s }}</li>
+                                            {% endfor %}
+                                        </ul>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="p-3 bg-warning-subtle rounded-3 border border-warning-subtle">
+                                        <h6 class="fw-bold text-warning-emphasis mb-2">🎯 Recommended Improvements</h6>
+                                        <ul class="small mb-0 ps-3">
+                                            {% for imp in fb.improvements or ['Add more quantifiable metrics in answers'] %}
+                                                <li>{{ imp }}</li>
+                                            {% endfor %}
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {% if fb.f2f_evaluations %}
+                                <h6 class="fw-bold small text-dark mb-2">Question Breakdown:</h6>
+                                <div class="accordion" id="accordion-history-{{ mi.id }}">
+                                    {% for qe in fb.f2f_evaluations %}
+                                        <div class="accordion-item border rounded-2 mb-2 overflow-hidden">
+                                            <h2 class="accordion-header">
+                                                <button class="accordion-button collapsed py-2 px-3 fw-bold small" type="button" data-bs-toggle="collapse" data-bs-target="#hist-q-{{ mi.id }}-{{ loop.index }}">
+                                                    Q{{ loop.index }}: {{ qe.type }} (Score: {{ qe.score }}/100)
+                                                </button>
+                                            </h2>
+                                            <div id="hist-q-{{ mi.id }}-loop-{{ loop.index }}" class="accordion-collapse collapse" data-bs-parent="#accordion-history-{{ mi.id }}">
+                                                <div class="accordion-body small bg-light">
+                                                    <p class="fw-bold mb-1 text-secondary">{{ qe.question }}</p>
+                                                    <div class="bg-white p-2 rounded border mb-2">
+                                                        <strong>Recorded Response:</strong><br>
+                                                        <span class="text-muted">{{ qe.candidate_answer }}</span>
+                                                    </div>
+                                                    <div class="text-muted small">
+                                                        <strong>Optimal Framework:</strong> {{ qe.guidance }}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+
+                            <div class="d-flex justify-content-end gap-2 mt-3 pt-2 border-top">
+                                {% if mi.job_id %}
+                                    <a href="{{ url_for('start_job_interview', job_id=mi.job_id) }}" class="btn btn-sm btn-primary fw-bold">
+                                        Practice Again &rarr;
+                                    </a>
+                                {% else %}
+                                    <a href="{{ url_for('interview_hub') }}" class="btn btn-sm btn-primary fw-bold">
+                                        Practice Another Track &rarr;
+                                    </a>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% else %}
+<div class="empty-state-card text-center py-5 shadow-sm">
+    <span class="empty-icon fs-1">🎯</span>
+    <h3 class="fw-bold mt-2" style="color: var(--secondary);">No Interview Scorecards Yet</h3>
+    <p class="text-muted small mb-4" style="max-width: 480px; margin: 0 auto;">
+        You haven't completed any AI mock interviews yet. Launch a practice room to simulate real Face-to-Face and Technical coding rounds!
+    </p>
+    <a href="{{ url_for('interview_hub') }}" class="btn btn-primary px-4 py-2 fw-semibold" style="background: var(--primary); border: none; border-radius: var(--radius-sm);">
+        ⚡ Start Your First AI Mock Interview
+    </a>
+</div>
+{% endif %}
+{% endblock %}

@@ -30,6 +30,11 @@
             <nav class="d-flex align-items-center gap-3">
                 <ul class="nav-links d-flex align-items-center mb-0 list-unstyled gap-2">
                     <li><a class="nav-pill-link" href="{{ url_for('index') }}">Explore Jobs</a></li>
+                    <li>
+                        <a class="nav-pill-link nav-badge-interview" href="{{ url_for('interview_hub') }}">
+                            🎯 AI Mock Interview
+                        </a>
+                    </li>
 
                     {% if user.is_authenticated %}
                         {% if user.is_admin %}
@@ -47,6 +52,7 @@
                             {% endif %}
                         {% else %}
                             <li><a class="nav-pill-link" href="{{ url_for('my_applications') }}">My Applications</a></li>
+                            <li><a class="nav-pill-link" href="{{ url_for('my_interviews') }}">📊 My Scorecards</a></li>
                         {% endif %}
                     {% endif %}
                 </ul>

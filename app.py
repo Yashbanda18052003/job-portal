@@ -1,11 +1,13 @@
-from flask import Flask, render_template, redirect, request, url_for, session, flash, send_from_directory
+from flask import Flask, render_template, redirect, request, url_for, session, flash, send_from_directory, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user, UserMixin
 from functools import wraps
 import os
+import json
 from werkzeug.utils import secure_filename
+import interview_engine
 
 # Initialize app
 app = Flask(__name__)
@@ -87,6 +89,26 @@ class Application(db.Model):
     job = db.relationship('Job', backref='applications')
 
 
+class MockInterview(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    job_id = db.Column(db.Integer, db.ForeignKey('job.id'), nullable=True)
+    role_title = db.Column(db.String(200), nullable=False)
+    company = db.Column(db.String(200), default="Tech Corp")
+    score = db.Column(db.Integer, default=0)
+    grade = db.Column(db.String(10), default="B")
+    communication_score = db.Column(db.Integer, default=0)
+    technical_score = db.Column(db.Integer, default=0)
+    problem_solving_score = db.Column(db.Integer, default=0)
+    code_score = db.Column(db.Integer, default=0)
+    feedback_summary = db.Column(db.Text)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    # Relationships
+    user = db.relationship('User', backref='interviews')
+    job = db.relationship('Job', backref='interviews')
+
+
 # ==========================================
 # DECORATORS & SEEDING
 # ==========================================
@@ -102,6 +124,7 @@ def admin_required(f):
 
 def check_db_schema():
     try:
+        db.create_all()
         from sqlalchemy import text
         with db.engine.connect() as conn:
             result = conn.execute(text("PRAGMA table_info(job);")).fetchall()
@@ -510,6 +533,181 @@ def change_application_status(app_id, new_status):
     if current_user.is_admin:
         return redirect(url_for('admin_dashboard'))
     return redirect(url_for('view_applications'))
+
+
+# ==========================================
+# AI MOCK INTERVIEW ROUTES
+# ==========================================
+@app.route('/interview-practice')
+def interview_hub():
+    """Hub for candidate interview practice: tracks, open jobs, and past records."""
+    jobs = Job.query.filter_by(status='Open').order_by(Job.created_at.desc()).limit(12).all()
+    user_interviews = []
+    if current_user.is_authenticated:
+        user_interviews = MockInterview.query.filter_by(user_id=current_user.id).order_by(MockInterview.created_at.desc()).limit(6).all()
+    
+    tracks = [
+        {
+            'key': 'backend',
+            'title': 'Backend Engineering',
+            'badge': '⚙️ Backend Systems',
+            'desc': 'System design, database indexing, caching strategies, concurrency, and algorithmic problem-solving.',
+            'role': 'Senior Backend Engineer (Python / Java / Go)'
+        },
+        {
+            'key': 'frontend',
+            'title': 'Frontend Engineering',
+            'badge': '🎨 Frontend & UI',
+            'desc': 'Core Web Vitals, state management, component lifecycles, DOM manipulation, and JavaScript logic.',
+            'role': 'Senior Frontend Engineer (React / TypeScript)'
+        },
+        {
+            'key': 'fullstack',
+            'title': 'Full-Stack Development',
+            'badge': '🌐 Full-Stack',
+            'desc': 'End-to-end architecture, RESTful API design, authentication, CSRF/XSS, and database integration.',
+            'role': 'Full-Stack Software Engineer'
+        },
+        {
+            'key': 'data_ai',
+            'title': 'Data Science & AI',
+            'badge': '🤖 AI & Data',
+            'desc': 'Machine learning pipelines, data drift, feature scaling, model metrics, and statistical coding challenges.',
+            'role': 'Data Scientist & Machine Learning Engineer'
+        },
+        {
+            'key': 'devops',
+            'title': 'DevOps & Cloud',
+            'badge': '☁️ DevOps & Cloud',
+            'desc': 'Kubernetes orchestration, CI/CD pipelines, automated canary rollouts, and infrastructure reliability.',
+            'role': 'Cloud Infrastructure & DevOps Engineer'
+        },
+        {
+            'key': 'mobile',
+            'title': 'Mobile Development',
+            'badge': '📱 Mobile Engineering',
+            'desc': 'Offline caching, mobile lifecycle management, memory leaks, and mobile algorithmic challenges.',
+            'role': 'Mobile Application Engineer (iOS / Android / Flutter)'
+        }
+    ]
+    return render_template('interview_hub.html', jobs=jobs, user_interviews=user_interviews, tracks=tracks)
+
+
+@app.route('/interview/<int:job_id>')
+def start_job_interview(job_id):
+    """Launches the dual-round interview room tailored for a specific job."""
+    job = Job.query.get_or_404(job_id)
+    bundle = interview_engine.get_interview_bundle(job=job)
+    return render_template(
+        'interview_room.html',
+        job=job,
+        bundle=bundle,
+        bundle_json=json.dumps(bundle)
+    )
+
+
+@app.route('/interview/custom')
+def start_custom_interview():
+    """Launches interview room for a selected domain track or custom role."""
+    track = request.args.get('track', 'backend')
+    role = request.args.get('role', '')
+    
+    default_roles = {
+        'backend': 'Senior Backend Engineer (Python / Java / Go)',
+        'frontend': 'Senior Frontend Engineer (React / TypeScript)',
+        'fullstack': 'Full-Stack Web Developer',
+        'data_ai': 'Data Scientist & AI Specialist',
+        'devops': 'DevOps & Cloud Infrastructure Engineer',
+        'mobile': 'Mobile Application Engineer'
+    }
+    
+    chosen_role = role if role else default_roles.get(track, 'Software Engineer')
+    bundle = interview_engine.get_interview_bundle(role_title=chosen_role, category=track.capitalize())
+    return render_template(
+        'interview_room.html',
+        job=None,
+        bundle=bundle,
+        bundle_json=json.dumps(bundle)
+    )
+
+
+@app.route('/api/run-code', methods=['POST'])
+def api_run_code():
+    """Executes code via local or cloud compiler and returns output and diagnostics."""
+    data = request.get_json() or {}
+    language = data.get('language', 'python')
+    code = data.get('code', '')
+    custom_stdin = data.get('stdin', '')
+    
+    result = interview_engine.execute_code(language, code, custom_stdin)
+    return jsonify(result)
+
+
+@app.route('/api/submit-interview', methods=['POST'])
+def api_submit_interview():
+    """Evaluates candidate face-to-face and coding performance, generating detailed report."""
+    data = request.get_json() or {}
+    job_id = data.get('job_id')
+    role_title = data.get('role_title', 'Software Engineer')
+    company = data.get('company', 'Tech Innovations Inc.')
+    answers = data.get('answers', [])
+    code_submission = data.get('code_submission', {})
+    
+    job = Job.query.get(job_id) if job_id else None
+    bundle = interview_engine.get_interview_bundle(job=job, role_title=role_title, company=company)
+    
+    evaluation = interview_engine.evaluate_candidate_session(bundle, answers, code_submission)
+    
+    if current_user.is_authenticated:
+        try:
+            mock = MockInterview(
+                user_id=current_user.id,
+                job_id=job.id if job else None,
+                role_title=bundle.get('role_title', role_title),
+                company=bundle.get('company', company),
+                score=evaluation['overall_score'],
+                grade=evaluation.get('grade', 'B'),
+                communication_score=evaluation['dimension_scores']['communication'],
+                technical_score=evaluation['dimension_scores']['technical_depth'],
+                problem_solving_score=evaluation['dimension_scores']['problem_solving'],
+                code_score=evaluation['dimension_scores']['code_correctness'],
+                feedback_summary=json.dumps(evaluation)
+            )
+            db.session.add(mock)
+            db.session.commit()
+            evaluation['saved'] = True
+            evaluation['interview_id'] = mock.id
+        except Exception as e:
+            db.session.rollback()
+            evaluation['saved'] = False
+            evaluation['save_error'] = str(e)
+    else:
+        evaluation['saved'] = False
+        
+    return jsonify({'success': True, 'evaluation': evaluation})
+
+
+@app.route('/my-interviews')
+@login_required
+def my_interviews():
+    """Displays candidate's historical interview scores, ratings, and AI feedback reports."""
+    interviews = MockInterview.query.filter_by(user_id=current_user.id).order_by(MockInterview.created_at.desc()).all()
+    
+    # Parse feedback JSON summaries for display
+    parsed_interviews = []
+    for item in interviews:
+        feedback = {}
+        try:
+            if item.feedback_summary:
+                feedback = json.loads(item.feedback_summary)
+        except Exception:
+            feedback = {}
+        parsed_interviews.append({
+            'item': item,
+            'feedback': feedback
+        })
+        
+    return render_template('my_interviews.html', interviews=parsed_interviews)
 
 
 # ==========================================

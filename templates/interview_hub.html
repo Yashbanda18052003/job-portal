@@ -1,0 +1,220 @@
+{% extends "base.html" %}
+
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/interview.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="interview-hub-container">
+
+    <!-- HERO HEADER -->
+    <div class="interview-hub-hero mb-5">
+        <div class="hero-badge-pill">
+            <span>✨ AI-Powered Dual-Round Assessment</span>
+        </div>
+        <h1 class="display-5 fw-bold mb-2">Simulate Real Face-to-Face & Technical Interviews</h1>
+        <p class="lead mb-4" style="max-width: 720px; opacity: 0.95;">
+            Master your dream tech interview with live webcam practice, voice questions, and an interactive multi-language code compiler. Get instant AI scoring, diagnostic feedback, and model solutions.
+        </p>
+        <div class="d-flex flex-wrap gap-3">
+            <a href="#active-jobs-section" class="btn btn-light fw-bold px-4 py-2" style="border-radius: var(--radius-sm); color: var(--primary);">
+                💼 Practice for Active Job Openings
+            </a>
+            <a href="#tracks-section" class="btn btn-outline-light fw-bold px-4 py-2" style="border-radius: var(--radius-sm);">
+                ⚡ Practice by Track
+            </a>
+            {% if user.is_authenticated %}
+                <a href="{{ url_for('my_interviews') }}" class="btn btn-link text-white text-decoration-none fw-bold px-3 py-2">
+                    📊 View My Scorecards &rarr;
+                </a>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- DUAL ROUND FEATURES EXPLAINER -->
+    <div class="row g-4 mb-5">
+        <div class="col-md-6">
+            <div class="card h-100 border-0 shadow-sm p-4" style="border-radius: var(--radius-md); background: linear-gradient(180deg, #f8fafc 0%, #ffffff 100%); border: 1.5px solid var(--border-color) !important;">
+                <div class="d-flex align-items-center gap-3 mb-3">
+                    <span class="fs-1">🎥</span>
+                    <div>
+                        <h4 class="fw-bold mb-0" style="color: var(--secondary);">Round 1: Face-to-Face AI Interview</h4>
+                        <span class="text-muted small">Behavioral & Architecture Simulation</span>
+                    </div>
+                </div>
+                <p class="text-muted small mb-3">
+                    Experience a live video interview room with camera controls. The AI interviewer speaks questions aloud via speech synthesis. Answer by speaking into your microphone or typing directly.
+                </p>
+                <div class="d-flex flex-wrap gap-2">
+                    <span class="badge bg-primary-subtle text-primary border border-primary-subtle py-1 px-2 rounded-pill">Webcam Self-View</span>
+                    <span class="badge bg-primary-subtle text-primary border border-primary-subtle py-1 px-2 rounded-pill">AI Spoken Voice</span>
+                    <span class="badge bg-primary-subtle text-primary border border-primary-subtle py-1 px-2 rounded-pill">Speech-to-Text Transcription</span>
+                    <span class="badge bg-primary-subtle text-primary border border-primary-subtle py-1 px-2 rounded-pill">STAR Method Analysis</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card h-100 border-0 shadow-sm p-4" style="border-radius: var(--radius-md); background: linear-gradient(180deg, #f8fafc 0%, #ffffff 100%); border: 1.5px solid var(--border-color) !important;">
+                <div class="d-flex align-items-center gap-3 mb-3">
+                    <span class="fs-1">💻</span>
+                    <div>
+                        <h4 class="fw-bold mb-0" style="color: var(--secondary);">Round 2: Technical Coding IDE</h4>
+                        <span class="text-muted small">Multi-Language Online Compiler</span>
+                    </div>
+                </div>
+                <p class="text-muted small mb-3">
+                    Solve tailored coding challenges in an integrated editor with real-time compilation. Support for Python, JavaScript, Java, C++, C, Go, and Rust with custom test cases.
+                </p>
+                <div class="d-flex flex-wrap gap-2">
+                    <span class="badge bg-success-subtle text-success border border-success-subtle py-1 px-2 rounded-pill">7+ Languages</span>
+                    <span class="badge bg-success-subtle text-success border border-success-subtle py-1 px-2 rounded-pill">Live Terminal Output</span>
+                    <span class="badge bg-success-subtle text-success border border-success-subtle py-1 px-2 rounded-pill">Custom Stdin / Test Cases</span>
+                    <span class="badge bg-success-subtle text-success border border-success-subtle py-1 px-2 rounded-pill">Runtime Diagnostics</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SECTION 1: PRACTICE FOR ACTIVE JOB OPENINGS -->
+    <div id="active-jobs-section" class="mb-5 pt-3">
+        <div class="d-flex justify-content-between align-items-end mb-4 pb-2 border-bottom">
+            <div>
+                <span class="badge bg-primary-subtle text-primary px-3 py-1 rounded-pill fw-bold mb-2">Job-Tailored Practice</span>
+                <h2 class="fw-bold mb-1" style="color: var(--secondary);">Practice for Real Job Openings</h2>
+                <p class="text-muted small mb-0">Our AI automatically extracts the job requirements and customizes interview rounds specifically for each role.</p>
+            </div>
+            <a href="{{ url_for('index') }}" class="text-primary fw-bold text-decoration-none small">
+                Explore All Jobs &rarr;
+            </a>
+        </div>
+
+        {% if jobs %}
+            <div class="row g-4">
+                {% for job in jobs %}
+                    <div class="col-lg-4 col-md-6">
+                        <div class="card h-100 border-0 shadow-sm p-3" style="border-radius: var(--radius-md); border: 1px solid var(--border-color) !important; background: var(--surface); display: flex; flex-direction: column;">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <span class="badge bg-light text-dark border px-2 py-1 rounded-pill small">
+                                    🏢 {{ job.company or "Verified Employer" }}
+                                </span>
+                                <span class="badge bg-success-subtle text-success px-2 py-1 rounded-pill small">
+                                    {{ job.category or "Engineering" }}
+                                </span>
+                            </div>
+                            <h5 class="fw-bold mb-2" style="font-size: 1.05rem; color: var(--secondary);">{{ job.title }}</h5>
+                            <p class="text-muted small mb-3 flex-grow-1">
+                                {{ job.description[:110] }}{% if job.description|length > 110 %}...{% endif %}
+                            </p>
+                            <div class="d-flex align-items-center justify-content-between pt-2 border-top mt-auto">
+                                <span class="text-muted small">📍 {{ job.location or "Remote" }}</span>
+                                <a href="{{ url_for('start_job_interview', job_id=job.id) }}" class="btn-interview-card">
+                                    🎯 Start Interview &rarr;
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="alert alert-info">No active jobs found. You can practice via tracks below!</div>
+        {% endif %}
+    </div>
+
+    <!-- SECTION 2: PRACTICE BY TECHNICAL TRACK -->
+    <div id="tracks-section" class="mb-5 pt-3">
+        <div class="mb-4 pb-2 border-bottom">
+            <span class="badge bg-indigo-subtle text-indigo px-3 py-1 rounded-pill fw-bold mb-2">Domain Focus</span>
+            <h2 class="fw-bold mb-1" style="color: var(--secondary);">Practice by Specialized Track</h2>
+            <p class="text-muted small mb-0">Select your specialization to practice standard high-frequency questions and coding challenges.</p>
+        </div>
+
+        <div class="row g-4">
+            {% for track in tracks %}
+                <div class="col-lg-4 col-md-6">
+                    <div class="track-card">
+                        <div class="d-flex align-items-center justify-content-between mb-3">
+                            <div class="track-icon-wrapper">
+                                {{ track.badge.split()[0] }}
+                            </div>
+                            <span class="badge bg-primary-subtle text-primary px-3 py-1 rounded-pill small fw-bold">
+                                {{ track.badge }}
+                            </span>
+                        </div>
+                        <h4 class="fw-bold mb-1" style="font-size: 1.15rem; color: var(--secondary);">{{ track.title }}</h4>
+                        <p class="text-muted small mb-3 flex-grow-1">{{ track.desc }}</p>
+                        
+                        <div class="bg-light p-2 rounded-2 mb-3 small text-muted">
+                            <strong>Target Role:</strong> {{ track.role }}
+                        </div>
+
+                        <a href="{{ url_for('start_custom_interview', track=track.key, role=track.role) }}" class="btn-start-track">
+                            Launch Practice Simulator &rarr;
+                        </a>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- SECTION 3: CANDIDATE'S PAST SCORECARDS -->
+    {% if user.is_authenticated and user_interviews %}
+        <div class="mb-5 pt-3">
+            <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom">
+                <div>
+                    <h2 class="fw-bold mb-1" style="color: var(--secondary);">Your Recent Interview Reports</h2>
+                    <p class="text-muted small mb-0">Track your score improvements across practice sessions.</p>
+                </div>
+                <a href="{{ url_for('my_interviews') }}" class="btn btn-outline-primary btn-sm fw-bold">
+                    View Full History &rarr;
+                </a>
+            </div>
+
+            <div class="table-responsive bg-white rounded-3 shadow-sm border">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light small text-muted">
+                        <tr>
+                            <th>ROLE & COMPANY</th>
+                            <th>DATE</th>
+                            <th>OVERALL SCORE</th>
+                            <th>GRADE</th>
+                            <th>COMMUNICATION</th>
+                            <th>TECHNICAL</th>
+                            <th>CODING</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for mi in user_interviews %}
+                            <tr>
+                                <td>
+                                    <div class="fw-bold">{{ mi.role_title }}</div>
+                                    <span class="text-muted small">🏢 {{ mi.company }}</span>
+                                </td>
+                                <td class="small text-muted">{{ mi.created_at.strftime('%d %b %Y, %H:%M') }}</td>
+                                <td>
+                                    <span class="badge bg-primary px-3 py-2 rounded-pill fw-bold" style="font-size: 0.9rem;">
+                                        {{ mi.score }} / 100
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="badge bg-success-subtle text-success px-2 py-1 rounded fw-bold">{{ mi.grade }}</span>
+                                </td>
+                                <td>
+                                    <div class="small fw-bold">{{ mi.communication_score }}%</div>
+                                </td>
+                                <td>
+                                    <div class="small fw-bold">{{ mi.technical_score }}%</div>
+                                </td>
+                                <td>
+                                    <div class="small fw-bold">{{ mi.code_score }}%</div>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    {% endif %}
+
+</div>
+{% endblock %}

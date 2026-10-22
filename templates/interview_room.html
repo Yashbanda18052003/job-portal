@@ -1,0 +1,1042 @@
+{% extends "base.html" %}
+
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/interview.css') }}">
+<style>
+    /* In-page styling refinements for code editor and webcam */
+    .editor-line-numbers {
+        width: 45px;
+        background: #181825;
+        color: #6c7086;
+        font-family: 'Consolas', monospace;
+        font-size: 0.95rem;
+        line-height: 1.6;
+        padding: 1.25rem 0.5rem;
+        text-align: right;
+        user-select: none;
+        border-right: 1px solid #313244;
+    }
+    .modal-scorecard .modal-content {
+        border-radius: var(--radius-lg);
+        border: none;
+        overflow: hidden;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="interview-room-wrapper pb-5">
+
+    <!-- TOP HEADER BAR -->
+    <div class="interview-room-header d-flex flex-wrap align-items-center justify-content-between gap-3">
+        <div>
+            <div class="d-flex align-items-center gap-2 mb-1">
+                <span class="badge bg-primary-subtle text-primary fw-bold px-3 py-1 rounded-pill">
+                    {{ bundle.domain_badge }}
+                </span>
+                <span class="badge bg-light text-dark border px-3 py-1 rounded-pill">
+                    🏢 {{ bundle.company }}
+                </span>
+            </div>
+            <h3 class="fw-bold mb-0" style="color: var(--secondary);">{{ bundle.role_title }}</h3>
+        </div>
+
+        <!-- ROUND SWITCHER PILLS -->
+        <div class="d-flex align-items-center gap-2">
+            <button type="button" class="round-tab-btn active" id="tab-btn-round1" onclick="switchRound(1)">
+                <span>🎥 Round 1: Face-to-Face AI</span>
+            </button>
+            <button type="button" class="round-tab-btn" id="tab-btn-round2" onclick="switchRound(2)">
+                <span>💻 Round 2: Technical Coding</span>
+            </button>
+        </div>
+
+        <!-- SESSION TIMER & SUBMIT ACTION -->
+        <div class="d-flex align-items-center gap-3">
+            <div class="bg-light px-3 py-2 rounded-pill border small fw-bold text-muted d-flex align-items-center gap-2">
+                <span>⏱ Session:</span>
+                <span id="session-timer" class="text-dark">00:00</span>
+            </div>
+            <button type="button" class="btn btn-primary fw-bold px-4 py-2" style="border-radius: var(--radius-sm); background: var(--primary); border: none;" onclick="submitCompleteInterview()">
+                🏆 Complete & Score AI
+            </button>
+        </div>
+    </div>
+
+
+    <!-- ==============================================================================
+         ROUND 1: FACE-TO-FACE AI INTERVIEW CONTAINER
+         ============================================================================== -->
+    <div id="round-1-container">
+        
+        <!-- VIDEO & AI PERSONA GRID -->
+        <div class="f2f-grid">
+            
+            <!-- LEFT: Candidate Webcam Feed -->
+            <div class="video-card">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <span class="fw-bold text-white small">
+                        👤 Candidate Self-View
+                    </span>
+                    <span id="cam-status-badge" class="badge bg-danger rounded-pill px-3 py-1">
+                        Camera Off
+                    </span>
+                </div>
+
+                <div class="video-container" id="video-box">
+                    <video id="webcam-video" autoplay playsinline muted style="display: none;"></video>
+                    <div id="video-placeholder" class="video-placeholder">
+                        <span class="fs-1">📷</span>
+                        <span class="small">Click "Start Webcam" to enable your camera</span>
+                    </div>
+                </div>
+
+                <div class="cam-controls">
+                    <button type="button" class="btn-ctrl" id="btn-toggle-cam" onclick="toggleCamera()">
+                        📹 <span id="cam-btn-text">Start Webcam</span>
+                    </button>
+                    <button type="button" class="btn-ctrl" id="btn-toggle-mic" onclick="toggleMicrophone()">
+                        🎙️ <span id="mic-btn-text">Mic Active</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- RIGHT: AI Interviewer Persona -->
+            <div class="ai-card text-center">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="badge bg-indigo-subtle text-white border border-light-subtle rounded-pill px-3 py-1 small">
+                        AI Technical Recruiter
+                    </span>
+                    <span id="ai-status-pill" class="badge bg-secondary rounded-pill px-3 py-1">
+                        Ready
+                    </span>
+                </div>
+
+                <!-- AI Avatar with Glowing Ripple -->
+                <div class="ai-avatar-circle" id="ai-avatar">
+                    🤖
+                </div>
+                <h5 class="fw-bold text-white mb-1">Sarah &bull; AI Interviewer</h5>
+                <p class="text-white-50 small mb-2">Evaluating for {{ bundle.company }}</p>
+
+                <!-- Audio Waveform Visualization -->
+                <div class="wave-bars" id="wave-container">
+                    <div class="wave-bar"></div>
+                    <div class="wave-bar"></div>
+                    <div class="wave-bar"></div>
+                    <div class="wave-bar"></div>
+                    <div class="wave-bar"></div>
+                    <div class="wave-bar"></div>
+                    <div class="wave-bar"></div>
+                </div>
+
+                <div class="d-flex justify-content-center align-items-center gap-2 mt-auto">
+                    <button type="button" class="btn btn-outline-light btn-sm rounded-pill px-3 fw-bold" onclick="speakCurrentQuestion()">
+                        🔊 Replay AI Question
+                    </button>
+                    <button type="button" class="btn btn-outline-light btn-sm rounded-pill px-3 fw-bold" onclick="stopAiSpeech()">
+                        ⏹ Stop Audio
+                    </button>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- QUESTION CARD & ANSWER INTERACTION -->
+        <div class="question-card">
+            <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3 pb-2 border-bottom">
+                <div class="d-flex align-items-center gap-2">
+                    <span class="badge bg-primary px-3 py-2 rounded-pill fw-bold" id="q-counter-badge">
+                        Question 1 of {{ bundle.face_to_face_questions|length }}
+                    </span>
+                    <span class="badge bg-light text-dark border px-3 py-2 rounded-pill fw-bold" id="q-type-badge">
+                        Role & Behavioral
+                    </span>
+                </div>
+
+                <!-- Question Navigation Dots -->
+                <div class="d-flex align-items-center gap-1" id="q-dots-container">
+                    {% for q in bundle.face_to_face_questions %}
+                        <button type="button" class="btn btn-sm btn-outline-primary py-0 px-2 rounded-pill q-nav-dot {% if loop.first %}active{% endif %}" onclick="goToQuestion({{ loop.index0 }})">
+                            Q{{ loop.index }}
+                        </button>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Question Text -->
+            <h4 class="fw-bold mb-3" id="current-question-text" style="color: var(--secondary); line-height: 1.5;">
+                {{ bundle.face_to_face_questions[0].question }}
+            </h4>
+
+            <!-- Guidance Hint Box -->
+            <div class="bg-light p-3 rounded-2 mb-4 border-start border-4 border-primary">
+                <span class="fw-bold small text-primary d-block mb-1">💡 Suggested Response Focus:</span>
+                <span class="text-muted small" id="current-guidance-text">
+                    {{ bundle.face_to_face_questions[0].guidance }}
+                </span>
+            </div>
+
+            <!-- Candidate Answer Input Area -->
+            <div class="mb-3">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <label class="fw-bold text-dark small">Your Verbal or Typed Response:</label>
+                    <div class="d-flex align-items-center gap-2">
+                        <button type="button" class="voice-record-btn" id="btn-voice-record" onclick="toggleVoiceRecognition()">
+                            <span>🎙️</span> <span id="record-btn-label">Speak Answer</span>
+                        </button>
+                        <span id="transcription-status" class="small text-muted fst-italic"></span>
+                    </div>
+                </div>
+
+                <textarea id="candidate-answer-textarea" rows="5" class="form-control" style="border-radius: var(--radius-sm); border: 1.5px solid var(--border-color); font-size: 0.95rem; line-height: 1.6;" placeholder="Speak via microphone or type your response here... We evaluate communication clarity, depth of explanation, and relevant examples."></textarea>
+                <div class="d-flex justify-content-between align-items-center mt-2">
+                    <small class="text-muted" id="word-count-display">Words: 0</small>
+                    <small class="text-muted">Tip: Follow the <strong>STAR</strong> method (Situation, Task, Action, Result).</small>
+                </div>
+            </div>
+
+            <!-- Question Navigation Actions -->
+            <div class="d-flex justify-content-between align-items-center pt-3 border-top">
+                <button type="button" class="btn btn-outline-secondary px-4 fw-bold" id="btn-prev-q" onclick="previousQuestion()" style="border-radius: var(--radius-sm);">
+                    &larr; Previous Question
+                </button>
+                <div class="d-flex gap-2">
+                    <button type="button" class="btn btn-primary px-4 fw-bold" id="btn-next-q" onclick="nextQuestion()" style="border-radius: var(--radius-sm); background: var(--primary); border: none;">
+                        Save & Next Question &rarr;
+                    </button>
+                    <button type="button" class="btn btn-success px-4 fw-bold" onclick="switchRound(2)" style="border-radius: var(--radius-sm);">
+                        Proceed to Technical Round &rarr;
+                    </button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+
+    <!-- ==============================================================================
+         ROUND 2: TECHNICAL CODING IDE CONTAINER
+         ============================================================================== -->
+    <div id="round-2-container" style="display: none;">
+        
+        <div class="coding-ide-grid">
+
+            <!-- LEFT PANE: Challenge Description & Test Cases -->
+            <div class="ide-left-pane">
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                    <span class="badge bg-warning-subtle text-dark border border-warning px-3 py-1 rounded-pill fw-bold">
+                        Difficulty: {{ bundle.coding_challenge.difficulty }}
+                    </span>
+                    <span class="text-muted small">⏱ Suggested: {{ bundle.coding_challenge.time_limit_mins }} mins</span>
+                </div>
+
+                <h3 class="fw-bold mb-3" style="color: var(--secondary);">{{ bundle.coding_challenge.title }}</h3>
+
+                <div class="challenge-desc mb-4" style="color: var(--text-main); font-size: 0.95rem; line-height: 1.6;">
+                    {{ bundle.coding_challenge.description|safe }}
+                </div>
+
+                <!-- Input & Output Formats -->
+                <div class="bg-white p-3 rounded-3 border mb-3">
+                    <div class="fw-bold small text-secondary mb-1">📥 Input Format:</div>
+                    <div class="small text-muted mb-2">{{ bundle.coding_challenge.input_format|safe }}</div>
+                    <div class="fw-bold small text-secondary mb-1">📤 Output Format:</div>
+                    <div class="small text-muted">{{ bundle.coding_challenge.output_format|safe }}</div>
+                </div>
+
+                <!-- Constraints -->
+                <div class="mb-4">
+                    <h6 class="fw-bold small text-dark mb-2">Constraints:</h6>
+                    <ul class="small text-muted mb-0 ps-3">
+                        {% for con in bundle.coding_challenge.constraints %}
+                            <li><code>{{ con }}</code></li>
+                        {% endfor %}
+                    </ul>
+                </div>
+
+                <!-- Example Test Cases -->
+                <h6 class="fw-bold small text-dark mb-2">Example Cases:</h6>
+                {% for ex in bundle.coding_challenge.examples %}
+                    <div class="bg-white p-3 rounded-3 border mb-3">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <span class="fw-bold small text-primary">Example {{ loop.index }}:</span>
+                            <button type="button" class="btn btn-link btn-sm p-0 text-decoration-none small text-muted" onclick="loadExampleStdin(`{{ ex.input }}`)">
+                                📋 Paste in Stdin
+                            </button>
+                        </div>
+                        <div class="small mb-1"><strong>Input:</strong> <pre class="bg-light p-1 rounded small mb-1">{{ ex.input }}</pre></div>
+                        <div class="small mb-1"><strong>Output:</strong> <pre class="bg-light p-1 rounded small mb-1">{{ ex.output }}</pre></div>
+                        <div class="small text-muted"><strong>Explanation:</strong> {{ ex.explanation }}</div>
+                    </div>
+                {% endfor %}
+            </div>
+
+            <!-- RIGHT PANE: Code Editor & Live Compiler Console -->
+            <div class="ide-right-pane">
+                
+                <!-- Toolbar -->
+                <div class="ide-toolbar">
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="text-white small fw-bold">Language:</span>
+                        <select id="lang-select" class="lang-select" onchange="handleLanguageChange()">
+                            <option value="python">Python 3</option>
+                            <option value="javascript">JavaScript (Node.js)</option>
+                            <option value="java">Java (OpenJDK)</option>
+                            <option value="cpp">C++ (GCC)</option>
+                            <option value="c">C (GCC)</option>
+                            <option value="go">Go</option>
+                            <option value="rust">Rust</option>
+                        </select>
+                        <button type="button" class="btn btn-outline-light btn-sm py-1 px-2 text-nowrap" style="font-size: 0.78rem;" onclick="resetBoilerplate()">
+                            🔄 Reset Code
+                        </button>
+                    </div>
+
+                    <div class="d-flex align-items-center gap-2">
+                        <button type="button" class="btn-run-code" id="btn-run-code" onclick="runCandidateCode()">
+                            <span>▶</span> <span id="run-btn-label">Run Code</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Code Editor Area -->
+                <div class="editor-wrapper d-flex">
+                    <textarea id="code-editor-textarea" spellcheck="false" placeholder="Write your solution here..."></textarea>
+                </div>
+
+                <!-- Custom Test Input (stdin) Bar -->
+                <div class="p-2" style="background: #181825; border-top: 1px solid #313244;">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <span class="text-white small fw-bold" style="font-size: 0.8rem;">📥 Custom Stdin / Test Input:</span>
+                        <small class="text-muted" style="font-size: 0.75rem;">Sent to standard input (stdin)</small>
+                    </div>
+                    <textarea id="custom-stdin-input" rows="2" class="form-control form-control-sm" style="background: #1e1e2e; color: #cdd6f4; border: 1px solid #45475a; font-family: monospace; font-size: 0.82rem;" placeholder="Paste custom test case input here...">{{ bundle.coding_challenge.default_stdin }}</textarea>
+                </div>
+
+                <!-- Live Compiler Terminal Screen -->
+                <div class="terminal-pane" id="terminal-pane">
+                    <div class="terminal-header">
+                        <div class="d-flex align-items-center gap-2">
+                            <div class="terminal-dots">
+                                <span class="t-dot t-red"></span>
+                                <span class="t-dot t-yellow"></span>
+                                <span class="t-dot t-green"></span>
+                            </div>
+                            <span class="text-muted small ms-1" style="font-size: 0.78rem;">Execution Terminal</span>
+                        </div>
+                        <div class="d-flex align-items-center gap-2">
+                            <span id="terminal-runtime-badge" class="badge bg-dark text-muted border border-secondary" style="font-size: 0.75rem;">Idle</span>
+                            <span id="terminal-status-badge" class="badge bg-secondary" style="font-size: 0.75rem;">Ready</span>
+                        </div>
+                    </div>
+                    <div id="terminal-body" class="small">
+                        <span class="text-muted">&gt; Click "Run Code" to compile and execute your solution in real time.</span>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- ==============================================================================
+     AI SCORECARD EVALUATION REPORT MODAL
+     ============================================================================== -->
+<div class="modal fade modal-scorecard" id="evaluationModal" tabindex="-1" aria-labelledby="evaluationModalLabel" aria-hidden="true" data-bs-backdrop="static">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content shadow-lg border-0">
+            <div class="modal-header py-3 text-white" style="background: linear-gradient(135deg, #4338ca 0%, #6366f1 100%);">
+                <div>
+                    <h4 class="modal-title fw-bold mb-0" id="evaluationModalLabel">🎯 AI Interview Performance Report</h4>
+                    <span class="small opacity-75" id="eval-role-company">Evaluation Breakdown</span>
+                </div>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            
+            <div class="modal-body p-4" id="modal-eval-body">
+                
+                <!-- Loading State inside Modal -->
+                <div id="eval-loading" class="text-center py-5">
+                    <div class="spinner-border text-primary mb-3" style="width: 3rem; height: 3rem;" role="status"></div>
+                    <h5 class="fw-bold">AI Recruiter is Analyzing Your Interview...</h5>
+                    <p class="text-muted small">Evaluating speech fluency, technical accuracy, code correctness, and algorithmic efficiency.</p>
+                </div>
+
+                <!-- Report Content (Populated via JS) -->
+                <div id="eval-content" style="display: none;">
+                    
+                    <!-- Top Score Summary -->
+                    <div class="row align-items-center g-4 mb-4 pb-4 border-bottom">
+                        <div class="col-md-4 text-center">
+                            <div class="score-circle">
+                                <span class="score-num" id="eval-overall-score">88</span>
+                                <span class="score-lbl">Overall / 100</span>
+                            </div>
+                            <div class="mt-2 fw-bold text-success fs-5" id="eval-grade">Grade A+</div>
+                        </div>
+                        <div class="col-md-8">
+                            <h5 class="fw-bold mb-1" style="color: var(--secondary);">Hiring Recommendation</h5>
+                            <div class="alert alert-info py-2 px-3 small fw-bold mb-3" id="eval-recommendation">
+                                Strong Hire
+                            </div>
+
+                            <!-- 4 Dimension Progress Bars -->
+                            <div class="dim-bar-wrap">
+                                <div class="d-flex justify-content-between small fw-bold">
+                                    <span>🗣️ Communication & Articulation:</span>
+                                    <span id="score-comm">85%</span>
+                                </div>
+                                <div class="dim-bar-track"><div class="dim-bar-fill bg-primary" id="bar-comm" style="width: 85%;"></div></div>
+                            </div>
+                            <div class="dim-bar-wrap">
+                                <div class="d-flex justify-content-between small fw-bold">
+                                    <span>⚙️ Technical Architecture & Concepts:</span>
+                                    <span id="score-tech">90%</span>
+                                </div>
+                                <div class="dim-bar-track"><div class="dim-bar-fill bg-info" id="bar-tech" style="width: 90%;"></div></div>
+                            </div>
+                            <div class="dim-bar-wrap">
+                                <div class="d-flex justify-content-between small fw-bold">
+                                    <span>🧠 Problem Solving & Logic:</span>
+                                    <span id="score-prob">88%</span>
+                                </div>
+                                <div class="dim-bar-track"><div class="dim-bar-fill bg-warning" id="bar-prob" style="width: 88%;"></div></div>
+                            </div>
+                            <div class="dim-bar-wrap mb-0">
+                                <div class="d-flex justify-content-between small fw-bold">
+                                    <span>💻 Code Correctness & Compilation:</span>
+                                    <span id="score-code">92%</span>
+                                </div>
+                                <div class="dim-bar-track"><div class="dim-bar-fill bg-success" id="bar-code" style="width: 92%;"></div></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Strengths & Improvement Opportunities -->
+                    <div class="row g-4 mb-4">
+                        <div class="col-md-6">
+                            <div class="p-3 rounded-3 bg-success-subtle border border-success-subtle h-100">
+                                <h6 class="fw-bold text-success mb-2">🌟 Key Strengths Identified</h6>
+                                <ul class="small text-dark mb-0 ps-3" id="eval-strengths-list"></ul>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="p-3 rounded-3 bg-warning-subtle border border-warning-subtle h-100">
+                                <h6 class="fw-bold text-warning-emphasis mb-2">🎯 Recommended Improvements</h6>
+                                <ul class="small text-dark mb-0 ps-3" id="eval-improvements-list"></ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Questions Breakdown Accordion -->
+                    <h6 class="fw-bold mb-3" style="color: var(--secondary);">Detailed Answers & Feedback</h6>
+                    <div class="accordion mb-3" id="answersAccordion"></div>
+
+                    <div id="eval-save-status" class="text-center small text-muted"></div>
+                </div>
+
+            </div>
+
+            <div class="modal-footer bg-light py-2">
+                <a href="{{ url_for('interview_hub') }}" class="btn btn-outline-secondary fw-bold px-3">
+                    Practice Another Role
+                </a>
+                {% if user.is_authenticated %}
+                    <a href="{{ url_for('my_interviews') }}" class="btn btn-primary fw-bold px-4" style="background: var(--primary); border: none;">
+                        View My History &rarr;
+                    </a>
+                {% else %}
+                    <a href="{{ url_for('register') }}" class="btn btn-success fw-bold px-4">
+                        Create Free Account to Save Scorecard
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // ==============================================================================
+    // INTERVIEW STATE & DATA
+    // ==============================================================================
+    const BUNDLE = {{ bundle_json|safe }};
+    const JOB_ID = {{ job.id if job else 'null' }};
+    
+    let currentQuestionIndex = 0;
+    const candidateAnswers = new Array(BUNDLE.face_to_face_questions.length).fill("");
+    
+    let currentLanguage = 'python';
+    let lastCodeRunResult = { status: 'not_run', output: '', code: '' };
+    
+    // Webcam & Mic State
+    let webcamStream = null;
+    let isCameraActive = false;
+    let isMicActive = true;
+    
+    // Voice Recognition (Speech-to-Text)
+    let recognition = null;
+    let isRecordingVoice = false;
+    
+    // Speech Synthesis (Text-to-Speech)
+    let synth = window.speechSynthesis;
+    let speechUtterance = null;
+    
+    // Timer
+    let sessionSeconds = 0;
+    setInterval(() => {
+        sessionSeconds++;
+        const mins = String(Math.floor(sessionSeconds / 60)).padStart(2, '0');
+        const secs = String(sessionSeconds % 60).padStart(2, '0');
+        const el = document.getElementById('session-timer');
+        if (el) el.textContent = `${mins}:${secs}`;
+    }, 1000);
+
+    // ==============================================================================
+    // INITIALIZATION
+    // ==============================================================================
+    document.addEventListener('DOMContentLoaded', () => {
+        // Initialize Code Editor with Default Python Boilerplate
+        loadBoilerplate('python');
+        
+        // Setup Tab Indentation in Code Editor (4 spaces)
+        const editor = document.getElementById('code-editor-textarea');
+        if (editor) {
+            editor.addEventListener('keydown', function(e) {
+                if (e.key === 'Tab') {
+                    e.preventDefault();
+                    const start = this.selectionStart;
+                    const end = this.selectionEnd;
+                    this.value = this.value.substring(0, start) + "    " + this.value.substring(end);
+                    this.selectionStart = this.selectionEnd = start + 4;
+                }
+            });
+        }
+
+        // Setup Answer Word Count Listener
+        const ansArea = document.getElementById('candidate-answer-textarea');
+        if (ansArea) {
+            ansArea.addEventListener('input', function() {
+                candidateAnswers[currentQuestionIndex] = this.value;
+                updateWordCount();
+            });
+        }
+
+        // Initialize Speech Recognition if supported
+        setupSpeechRecognition();
+
+        // Speak initial question welcome after a brief delay
+        setTimeout(() => {
+            speakCurrentQuestion();
+        }, 1200);
+    });
+
+    // ==============================================================================
+    // ROUND SWITCHER
+    // ==============================================================================
+    function switchRound(roundNum) {
+        // Save current answer before switching
+        const ans = document.getElementById('candidate-answer-textarea').value;
+        candidateAnswers[currentQuestionIndex] = ans;
+
+        const r1 = document.getElementById('round-1-container');
+        const r2 = document.getElementById('round-2-container');
+        const btn1 = document.getElementById('tab-btn-round1');
+        const btn2 = document.getElementById('tab-btn-round2');
+
+        if (roundNum === 1) {
+            r1.style.display = 'block';
+            r2.style.display = 'none';
+            btn1.classList.add('active');
+            btn2.classList.remove('active');
+        } else {
+            r1.style.display = 'none';
+            r2.style.display = 'block';
+            btn1.classList.remove('active');
+            btn2.classList.add('active');
+        }
+    }
+
+    // ==============================================================================
+    // WEBCAM & AUDIO CONTROLS
+    // ==============================================================================
+    async function toggleCamera() {
+        const video = document.getElementById('webcam-video');
+        const placeholder = document.getElementById('video-placeholder');
+        const badge = document.getElementById('cam-status-badge');
+        const btnText = document.getElementById('cam-btn-text');
+
+        if (!isCameraActive) {
+            try {
+                webcamStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+                video.srcObject = webcamStream;
+                video.style.display = 'block';
+                placeholder.style.display = 'none';
+                badge.className = 'badge bg-success rounded-pill px-3 py-1';
+                badge.textContent = '● Camera Active';
+                btnText.textContent = 'Stop Webcam';
+                isCameraActive = true;
+            } catch (err) {
+                alert('Camera permission denied or camera device not found: ' + err.message);
+            }
+        } else {
+            if (webcamStream) {
+                webcamStream.getTracks().forEach(track => track.stop());
+            }
+            video.srcObject = null;
+            video.style.display = 'none';
+            placeholder.style.display = 'flex';
+            badge.className = 'badge bg-danger rounded-pill px-3 py-1';
+            badge.textContent = 'Camera Off';
+            btnText.textContent = 'Start Webcam';
+            isCameraActive = false;
+        }
+    }
+
+    function toggleMicrophone() {
+        const btnText = document.getElementById('mic-btn-text');
+        const btn = document.getElementById('btn-toggle-mic');
+        isMicActive = !isMicActive;
+        if (isMicActive) {
+            btn.className = 'btn-ctrl';
+            btnText.textContent = 'Mic Active';
+        } else {
+            btn.className = 'btn-ctrl muted';
+            btnText.textContent = 'Mic Muted';
+            if (isRecordingVoice) toggleVoiceRecognition();
+        }
+    }
+
+    // ==============================================================================
+    // TEXT-TO-SPEECH (AI Interviewer Voice)
+    // ==============================================================================
+    function speakCurrentQuestion() {
+        if (!('speechSynthesis' in window)) return;
+        synth.cancel();
+
+        const q = BUNDLE.face_to_face_questions[currentQuestionIndex];
+        speechUtterance = new SpeechSynthesisUtterance(q.question);
+        speechUtterance.rate = 1.05;
+        speechUtterance.pitch = 1.0;
+
+        // Try to pick natural English voice
+        const voices = synth.getVoices();
+        const preferredVoice = voices.find(v => v.lang.startsWith('en') && (v.name.includes('Google') || v.name.includes('Natural') || v.name.includes('Zira') || v.name.includes('Samantha')));
+        if (preferredVoice) speechUtterance.voice = preferredVoice;
+
+        const avatar = document.getElementById('ai-avatar');
+        const wave = document.getElementById('wave-container');
+        const status = document.getElementById('ai-status-pill');
+
+        speechUtterance.onstart = () => {
+            avatar.classList.add('speaking');
+            wave.classList.add('speaking');
+            status.textContent = 'Speaking...';
+            status.className = 'badge bg-success rounded-pill px-3 py-1';
+        };
+
+        speechUtterance.onend = () => {
+            avatar.classList.remove('speaking');
+            wave.classList.remove('speaking');
+            status.textContent = 'Listening...';
+            status.className = 'badge bg-secondary rounded-pill px-3 py-1';
+        };
+
+        speechUtterance.onerror = () => {
+            avatar.classList.remove('speaking');
+            wave.classList.remove('speaking');
+            status.textContent = 'Ready';
+        };
+
+        synth.speak(speechUtterance);
+    }
+
+    function stopAiSpeech() {
+        if ('speechSynthesis' in window) {
+            synth.cancel();
+            document.getElementById('ai-avatar').classList.remove('speaking');
+            document.getElementById('wave-container').classList.remove('speaking');
+            document.getElementById('ai-status-pill').textContent = 'Ready';
+        }
+    }
+
+    // ==============================================================================
+    // SPEECH-TO-TEXT (Candidate Voice Answering)
+    // ==============================================================================
+    function setupSpeechRecognition() {
+        const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!SpeechRec) {
+            const btn = document.getElementById('btn-voice-record');
+            if (btn) btn.title = 'Web Speech API not supported in this browser. Please type your response.';
+            return;
+        }
+
+        recognition = new SpeechRec();
+        recognition.continuous = true;
+        recognition.interimResults = true;
+        recognition.lang = 'en-US';
+
+        const textarea = document.getElementById('candidate-answer-textarea');
+        const status = document.getElementById('transcription-status');
+
+        recognition.onresult = (event) => {
+            let interimTranscript = '';
+            for (let i = event.resultIndex; i < event.results.length; ++i) {
+                if (event.results[i].isFinal) {
+                    textarea.value += (textarea.value ? " " : "") + event.results[i][0].transcript;
+                } else {
+                    interimTranscript += event.results[i][0].transcript;
+                }
+            }
+            if (interimTranscript) {
+                status.textContent = `🎙️ Transcribing: "${interimTranscript.slice(-35)}..."`;
+            } else {
+                status.textContent = '';
+            }
+            candidateAnswers[currentQuestionIndex] = textarea.value;
+            updateWordCount();
+        };
+
+        recognition.onerror = (e) => {
+            console.warn('Speech recognition error:', e.error);
+            stopVoiceRecognition();
+        };
+
+        recognition.onend = () => {
+            stopVoiceRecognition();
+        };
+    }
+
+    function toggleVoiceRecognition() {
+        if (!recognition) {
+            alert('Voice recognition is not supported in this browser. You can type your answer directly!');
+            return;
+        }
+        if (!isRecordingVoice) {
+            startVoiceRecognition();
+        } else {
+            stopVoiceRecognition();
+        }
+    }
+
+    function startVoiceRecognition() {
+        if (!isMicActive) toggleMicrophone();
+        try {
+            recognition.start();
+            isRecordingVoice = true;
+            const btn = document.getElementById('btn-voice-record');
+            btn.classList.add('recording');
+            document.getElementById('record-btn-label').textContent = 'Listening (Click to Stop)';
+            document.getElementById('transcription-status').textContent = '🎙️ Listening...';
+        } catch (e) {
+            console.error(e);
+        }
+    }
+
+    function stopVoiceRecognition() {
+        if (recognition && isRecordingVoice) {
+            recognition.stop();
+        }
+        isRecordingVoice = false;
+        const btn = document.getElementById('btn-voice-record');
+        if (btn) {
+            btn.classList.remove('recording');
+            document.getElementById('record-btn-label').textContent = 'Speak Answer';
+        }
+        document.getElementById('transcription-status').textContent = '';
+    }
+
+    // ==============================================================================
+    // QUESTION NAVIGATION
+    // ==============================================================================
+    function renderQuestion(index) {
+        const q = BUNDLE.face_to_face_questions[index];
+        document.getElementById('q-counter-badge').textContent = `Question ${index + 1} of ${BUNDLE.face_to_face_questions.length}`;
+        document.getElementById('q-type-badge').textContent = q.type;
+        document.getElementById('current-question-text').textContent = q.question;
+        document.getElementById('current-guidance-text').textContent = q.guidance;
+
+        // Populate textarea with existing answer
+        const textarea = document.getElementById('candidate-answer-textarea');
+        textarea.value = candidateAnswers[index] || "";
+        updateWordCount();
+
+        // Update nav dots
+        document.querySelectorAll('.q-nav-dot').forEach((dot, idx) => {
+            dot.classList.toggle('active', idx === index);
+        });
+
+        // Toggle prev/next buttons
+        document.getElementById('btn-prev-q').disabled = (index === 0);
+        document.getElementById('btn-next-q').textContent = (index === BUNDLE.face_to_face_questions.length - 1) ? 'Save Answer' : 'Save & Next Question →';
+
+        // Auto speak question
+        speakCurrentQuestion();
+    }
+
+    function nextQuestion() {
+        const textarea = document.getElementById('candidate-answer-textarea');
+        candidateAnswers[currentQuestionIndex] = textarea.value;
+
+        if (currentQuestionIndex < BUNDLE.face_to_face_questions.length - 1) {
+            currentQuestionIndex++;
+            renderQuestion(currentQuestionIndex);
+        } else {
+            // Reached last question - prompt to move to coding round
+            switchRound(2);
+        }
+    }
+
+    function previousQuestion() {
+        const textarea = document.getElementById('candidate-answer-textarea');
+        candidateAnswers[currentQuestionIndex] = textarea.value;
+
+        if (currentQuestionIndex > 0) {
+            currentQuestionIndex--;
+            renderQuestion(currentQuestionIndex);
+        }
+    }
+
+    function goToQuestion(index) {
+        const textarea = document.getElementById('candidate-answer-textarea');
+        candidateAnswers[currentQuestionIndex] = textarea.value;
+
+        currentQuestionIndex = index;
+        renderQuestion(currentQuestionIndex);
+    }
+
+    function updateWordCount() {
+        const text = document.getElementById('candidate-answer-textarea').value.trim();
+        const words = text ? text.split(/\s+/).length : 0;
+        document.getElementById('word-count-display').textContent = `Words: ${words}`;
+    }
+
+    // ==============================================================================
+    // CODE COMPILER & EXECUTION
+    // ==============================================================================
+    function handleLanguageChange() {
+        const select = document.getElementById('lang-select');
+        currentLanguage = select.value;
+        loadBoilerplate(currentLanguage);
+    }
+
+    function loadBoilerplate(lang) {
+        const boilerplates = BUNDLE.coding_challenge.boilerplates || {};
+        const code = boilerplates[lang] || "// Write your solution here\n";
+        document.getElementById('code-editor-textarea').value = code;
+    }
+
+    function resetBoilerplate() {
+        if (confirm('Reset editor to default starter code for ' + currentLanguage + '?')) {
+            loadBoilerplate(currentLanguage);
+        }
+    }
+
+    function loadExampleStdin(inputVal) {
+        document.getElementById('custom-stdin-input').value = inputVal;
+    }
+
+    async function runCandidateCode() {
+        const code = document.getElementById('code-editor-textarea').value;
+        const stdin = document.getElementById('custom-stdin-input').value;
+        const btn = document.getElementById('btn-run-code');
+        const btnLabel = document.getElementById('run-btn-label');
+        const termBody = document.getElementById('terminal-body');
+        const statusBadge = document.getElementById('terminal-status-badge');
+        const runtimeBadge = document.getElementById('terminal-runtime-badge');
+
+        // UI Loading state
+        btn.disabled = true;
+        btnLabel.textContent = 'Compiling...';
+        statusBadge.className = 'badge bg-warning text-dark';
+        statusBadge.textContent = 'Running...';
+        runtimeBadge.textContent = '...';
+        termBody.innerHTML = '<span class="text-warning">&gt; Compiling and executing via ' + currentLanguage.toUpperCase() + ' runner...</span>';
+
+        try {
+            const resp = await fetch('/api/run-code', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    language: currentLanguage,
+                    code: code,
+                    stdin: stdin
+                })
+            });
+
+            const data = await resp.json();
+            lastCodeRunResult = {
+                language: currentLanguage,
+                code: code,
+                status: data.status,
+                output: data.output,
+                error: data.error,
+                execution_time_ms: data.execution_time_ms
+            };
+
+            runtimeBadge.textContent = `${data.execution_time_ms}ms (${data.runner || 'Runner'})`;
+
+            if (data.status === 'success') {
+                statusBadge.className = 'badge bg-success';
+                statusBadge.textContent = '✓ Success (Code 0)';
+                termBody.innerHTML = `<span class="text-success">&gt; Program Executed Successfully:</span>\n<div class="terminal-stdout mt-1">${escapeHtml(data.output || '(No stdout produced)')}</div>`;
+            } else if (data.status === 'compile_error') {
+                statusBadge.className = 'badge bg-danger';
+                statusBadge.textContent = '⚠ Compile Error';
+                termBody.innerHTML = `<span class="text-danger">&gt; Compilation Failed:</span>\n<div class="terminal-stderr mt-1">${escapeHtml(data.error || 'Syntax error')}</div>`;
+            } else if (data.status === 'timeout') {
+                statusBadge.className = 'badge bg-danger';
+                statusBadge.textContent = '⏱ Time Limit Exceeded';
+                termBody.innerHTML = `<span class="text-danger">&gt; ${escapeHtml(data.error)}</span>`;
+            } else {
+                statusBadge.className = 'badge bg-danger';
+                statusBadge.textContent = '⚠ Runtime Error';
+                termBody.innerHTML = `<span class="text-danger">&gt; Runtime Exception:</span>\n<div class="terminal-stderr mt-1">${escapeHtml(data.error || 'Execution error')}</div>`;
+            }
+
+        } catch (err) {
+            statusBadge.className = 'badge bg-danger';
+            statusBadge.textContent = 'Network Error';
+            termBody.innerHTML = `<span class="text-danger">&gt; Request failed: ${err.message}</span>`;
+        } finally {
+            btn.disabled = false;
+            btnLabel.textContent = 'Run Code';
+        }
+    }
+
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    // ==============================================================================
+    // COMPLETE INTERVIEW & EVALUATION SUBMISSION
+    // ==============================================================================
+    async function submitCompleteInterview() {
+        // Save latest text
+        candidateAnswers[currentQuestionIndex] = document.getElementById('candidate-answer-textarea').value;
+        const code = document.getElementById('code-editor-textarea').value;
+
+        // Auto-run code if not run yet
+        if (lastCodeRunResult.status === 'not_run') {
+            lastCodeRunResult = {
+                language: currentLanguage,
+                code: code,
+                status: 'untested',
+                output: ''
+            };
+        } else {
+            lastCodeRunResult.code = code;
+            lastCodeRunResult.language = currentLanguage;
+        }
+
+        // Open Modal in Loading State
+        const modalEl = document.getElementById('evaluationModal');
+        const modal = new bootstrap.Modal(modalEl);
+        document.getElementById('eval-loading').style.display = 'block';
+        document.getElementById('eval-content').style.display = 'none';
+        modal.show();
+
+        try {
+            const resp = await fetch('/api/submit-interview', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    job_id: JOB_ID,
+                    role_title: BUNDLE.role_title,
+                    company: BUNDLE.company,
+                    answers: candidateAnswers,
+                    code_submission: lastCodeRunResult
+                })
+            });
+
+            const data = await resp.json();
+            if (data.success && data.evaluation) {
+                renderEvaluationReport(data.evaluation);
+            } else {
+                alert('Evaluation error: ' + (data.error || 'Unknown error'));
+            }
+
+        } catch (err) {
+            alert('Failed to submit interview: ' + err.message);
+        }
+    }
+
+    function renderEvaluationReport(ev) {
+        document.getElementById('eval-loading').style.display = 'none';
+        document.getElementById('eval-content').style.display = 'block';
+
+        document.getElementById('eval-role-company').textContent = `${ev.role_title} at ${ev.company}`;
+        document.getElementById('eval-overall-score').textContent = ev.overall_score;
+        document.getElementById('eval-grade').textContent = `Grade ${ev.grade}`;
+        document.getElementById('eval-recommendation').textContent = ev.recommendation;
+
+        // Dimension Bars
+        const dims = ev.dimension_scores;
+        document.getElementById('score-comm').textContent = `${dims.communication}%`;
+        document.getElementById('bar-comm').style.width = `${dims.communication}%`;
+
+        document.getElementById('score-tech').textContent = `${dims.technical_depth}%`;
+        document.getElementById('bar-tech').style.width = `${dims.technical_depth}%`;
+
+        document.getElementById('score-prob').textContent = `${dims.problem_solving}%`;
+        document.getElementById('bar-prob').style.width = `${dims.problem_solving}%`;
+
+        document.getElementById('score-code').textContent = `${dims.code_correctness}%`;
+        document.getElementById('bar-code').style.width = `${dims.code_correctness}%`;
+
+        // Strengths
+        const strList = document.getElementById('eval-strengths-list');
+        strList.innerHTML = (ev.strengths || []).map(s => `<li>${s}</li>`).join('');
+
+        // Improvements
+        const impList = document.getElementById('eval-improvements-list');
+        impList.innerHTML = (ev.improvements || []).map(i => `<li>${i}</li>`).join('');
+
+        // Answers Accordion
+        const acc = document.getElementById('answersAccordion');
+        let accHtml = '';
+        (ev.f2f_evaluations || []).forEach((item, idx) => {
+            accHtml += `
+                <div class="accordion-item border rounded-3 mb-2 overflow-hidden">
+                    <h2 class="accordion-header" id="heading-${idx}">
+                        <button class="accordion-button collapsed py-2 px-3 fw-bold small" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-${idx}">
+                            Q${idx + 1}: ${item.type} — Score: ${item.score}/100
+                        </button>
+                    </h2>
+                    <div id="collapse-${idx}" class="accordion-collapse collapse" data-bs-parent="#answersAccordion">
+                        <div class="accordion-body small bg-light">
+                            <p class="fw-bold mb-1 text-secondary">${item.question}</p>
+                            <div class="bg-white p-2 rounded border mb-2">
+                                <strong>Your Response:</strong><br>
+                                <span class="text-muted">${item.candidate_answer}</span>
+                            </div>
+                            <div class="text-success small mb-1">
+                                <strong>Key Concepts Covered:</strong> ${item.matched_keywords.length > 0 ? item.matched_keywords.join(', ') : 'None detected'}
+                            </div>
+                            <div class="text-muted small">
+                                <strong>Recommended Approach:</strong> ${item.guidance}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+        acc.innerHTML = accHtml;
+
+        const saveEl = document.getElementById('eval-save-status');
+        if (ev.saved) {
+            saveEl.innerHTML = `<span class="text-success">✓ Performance scorecard saved to your account profile!</span>`;
+        } else {
+            saveEl.innerHTML = `<span>Guest Session &bull; Log in to permanently preserve practice history.</span>`;
+        }
+    }
+</script>
+{% endblock %}

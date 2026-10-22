@@ -85,6 +85,48 @@ A default administrator account is automatically verified upon launching the app
 
 ---
 
+## 🎯 AI Mock Interview & Multi-Language Compiler System
+
+JobPortal features an integrated **Dual-Round AI Interview Simulator** that prepares candidates before actual interviews:
+
+### 1. 🎥 Round 1: Face-to-Face AI Interview Simulator
+* **Live Webcam Self-View:** Real-time candidate video streaming with camera and microphone controls.
+* **AI Recruiter Persona (Voice & Waveform):** Interactive animated AI avatar with responsive audio soundwave visualization.
+* **Spoken AI Questions:** Browser Text-to-Speech (TTS via Web Speech API) speaks questions aloud with natural pacing.
+* **Speech-to-Text Voice Recording:** Candidates can speak their responses into their microphone; speech is transcribed in real-time, or they can type and edit their answers directly.
+* **Adaptive Questioning:** Behavioral, technical architecture, and crisis management questions matched specifically to each role.
+
+### 2. 💻 Round 2: Technical Coding IDE (Multi-Language Online Compiler)
+* **Real-Time Code Execution:** Interactive split-pane IDE supporting 7+ programming languages:
+  * **Python 3** (local high-speed sandbox)
+  * **JavaScript** (Node.js engine)
+  * **Java** (OpenJDK compiler & runtime)
+  * **C++** (GCC compiler)
+  * **C** (GCC compiler)
+  * **Go** (Golang runner)
+  * **Rust** (Rust compiler)
+* **Custom Stdin & Test Cases:** Test code against custom inputs and pre-loaded problem test cases.
+* **Terminal Diagnostics:** Live console output with standard output (`stdout`), compilation/runtime error tracking (`stderr`), and execution latency in milliseconds.
+
+### 3. 🤖 Instant AI Performance Report & Scorecard
+* **Overall Score (0-100)** with letter grades (`A+`, `B+`, etc.) and actionable hiring recommendations.
+* **Four-Dimension Diagnostic Breakdown:**
+  * Communication & Articulation
+  * Technical Architecture & Concepts
+  * Problem Solving & Algorithmic Logic
+  * Code Correctness & Compilation
+* **Personalized Strengths & Improvement Opportunities.**
+* **Persistent History:** Registered candidates can revisit past scorecards and review model answers anytime under `My Scorecards`.
+
+### ⚡ How Newly Posted Jobs are Handled:
+When an employer or admin publishes a new job vacancy:
+1. **Dynamic Domain & Keyword Extraction:** The system inspects the job's `title`, `category`, and `description` to identify core competencies (Backend, Frontend, Full-Stack, AI & Data, DevOps, Mobile).
+2. **Dynamic Interview Question Generation:** It personalizes behavioral and architectural questions using the job title and company name, and assigns relevant domain focus areas.
+3. **Targeted Technical Challenge Mapping:** It pairs the job with an appropriate algorithmic or system problem, automatically pre-loading working starter boilerplate in all 7 programming languages.
+4. **Immediate Availability:** The job card automatically displays a **"🎯 Practice Interview"** button linking directly to `/interview/<job_id>`.
+
+---
+
 ## 🛠️ Tech Stack
 
 * **Backend Framework:** [Flask 3.x](https://flask.palletsprojects.com/) (Python)
@@ -101,6 +143,7 @@ A default administrator account is automatically verified upon launching the app
 job-portal/
 ├── app.py                      # Application factory, database models & route controllers
 ├── config.py                   # Flask & SQLAlchemy configuration
+├── interview_engine.py         # AI question generator, multi-language compiler & evaluation
 ├── requirements.txt            # Python dependencies
 ├── run_app.bat                 # 1-Click Windows startup launcher
 ├── README.md                   # Project documentation
@@ -117,7 +160,8 @@ job-portal/
 │   │   ├── index.css           # Hero section, floating search card, job grid & avatars
 │   │   ├── forms.css           # Auth cards, role switcher tiles & form controls
 │   │   ├── admin.css           # Metric KPI cards & administrative data tables
-│   │   └── application.css     # PDF dropzone, application status badges & tracking
+│   │   ├── application.css     # PDF dropzone, application status badges & tracking
+│   │   └── interview.css       # Webcam feed, speech waves, IDE & terminal styles
 │   ├── js/
 │   │   ├── base.js             # Legacy query param toast handler
 │   │   └── register.js         # Interactive role switcher logic
@@ -132,7 +176,10 @@ job-portal/
     ├── apply_job.html          # Two-column job description & resume upload dropzone
     ├── my_applications.html    # Candidate application tracking dashboard
     ├── applications.html       # Employer received applications & decision controls
-    └── admin.html              # Superuser administration dashboard
+    ├── admin.html              # Superuser administration dashboard
+    ├── interview_hub.html      # AI Mock Interview portal & track selection
+    ├── interview_room.html     # Dual-round live simulator (Webcam + IDE Compiler)
+    └── my_interviews.html      # Historical interview performance scorecards
 ```
 
 ---

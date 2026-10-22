@@ -155,19 +155,24 @@
                             📅 {{ job.created_at.strftime('%d %b %Y') }}
                         </span>
 
-                        {% if not user.is_authenticated or (not user.is_employer and not user.is_admin) %}
-                            <a href="{{ url_for('apply_job', job_id=job.id) }}" class="btn-apply-card">
-                                <span>Apply Now</span> &rarr;
+                        <div class="d-flex align-items-center gap-2">
+                            <a href="{{ url_for('start_job_interview', job_id=job.id) }}" class="btn-interview-card" title="Practice Face-to-Face & Technical Coding interview for this job">
+                                🎯 Practice
                             </a>
-                        {% elif user.is_employer and job.posted_by == user.id %}
-                            <a href="{{ url_for('view_applications') }}" class="btn-view-app-card">
-                                View Applicants &rarr;
-                            </a>
-                        {% elif user.is_admin %}
-                            <a href="{{ url_for('admin_dashboard') }}" class="btn-admin-manage">
-                                Admin Manage &rarr;
-                            </a>
-                        {% endif %}
+                            {% if not user.is_authenticated or (not user.is_employer and not user.is_admin) %}
+                                <a href="{{ url_for('apply_job', job_id=job.id) }}" class="btn-apply-card">
+                                    <span>Apply</span> &rarr;
+                                </a>
+                            {% elif user.is_employer and job.posted_by == user.id %}
+                                <a href="{{ url_for('view_applications') }}" class="btn-view-app-card">
+                                    Applicants &rarr;
+                                </a>
+                            {% elif user.is_admin %}
+                                <a href="{{ url_for('admin_dashboard') }}" class="btn-admin-manage">
+                                    Manage &rarr;
+                                </a>
+                            {% endif %}
+                        </div>
                     </div>
                 </div>
             {% endfor %}
