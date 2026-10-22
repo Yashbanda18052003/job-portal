@@ -1,46 +1,85 @@
 {% extends 'base.html' %}
-{% block content %}
-<h2>My Applications</h2>
+
+{% block head %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/application.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom">
+    <div>
+        <h2 class="fw-bold mb-1" style="font-size: 1.6rem; color: var(--secondary);">My Job Applications</h2>
+        <p class="text-muted small mb-0">Track the real-time status of your submitted applications.</p>
+    </div>
+    <a href="{{ url_for('index') }}" class="btn btn-outline-primary px-3 py-2 fw-semibold" style="border-radius: var(--radius-sm); font-size: 0.875rem;">
+        🔍 Explore More Jobs
+    </a>
+</div>
 
 {% if applications %}
-<table class="table table-striped">
-    <thead>
-        <tr>
-            <th>Job Title</th>
-            <th>Company</th>
-            <th>Applied At</th>
-            <th>Resume</th>
-            <th>Status</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for app in applications %}
-        <tr>
-            <td>{{ app.job.title }}</td>
-            <td>{{ app.job.company }}</td>
-            <td>{{ app.applied_on.strftime('%Y-%m-%d %H:%M') }}</td>
-            <td>
-                {% if app.resume %}
-                <a href="{{ url_for('resume_file', filename=app.resume) }}" target="_blank">View Resume</a>
-                {% else %}
-                No Resume
-                {% endif %}
-            </td>
-            <td>
-                {% if app.status == 'Accepted' %}
-                <span class="badge bg-success">Accepted</span>
-                {% elif app.status == 'Rejected' %}
-                <span class="badge bg-danger">Rejected</span>
-                {% else %}
-                <span class="badge bg-secondary">Pending</span>
-                {% endif %}
-            </td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
+<div class="applications-table-card shadow-sm p-0 overflow-hidden">
+    <div class="table-responsive">
+        <table class="custom-table mb-0">
+            <thead>
+                <tr>
+                    <th>Job Title</th>
+                    <th>Company</th>
+                    <th>Date Applied</th>
+                    <th>Submitted Resume</th>
+                    <th>Application Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for app in applications %}
+                <tr>
+                    <td>
+                        <strong class="text-dark">{{ app.job.title if app.job else 'Job Unavailable' }}</strong>
+                        {% if app.job and app.job.category %}
+                            <div class="text-muted small" style="font-size: 0.775rem;">{{ app.job.category }}</div>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <span class="fw-semibold">{{ app.job.company if app.job else '-' }}</span>
+                    </td>
+                    <td class="text-muted small">
+                        {{ app.applied_on.strftime('%b %d, %Y • %I:%M %p') }}
+                    </td>
+                    <td>
+                        {% if app.resume %}
+                        <a href="{{ url_for('uploaded_file', filename=app.resume) }}" target="_blank" class="btn-action-sm btn-action-view">
+                            📄 View PDF
+                        </a>
+                        {% else %}
+                        <span class="text-muted small">No file</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if app.status == 'Accepted' %}
+                            <span class="status-badge accepted">✓ Accepted</span>
+                        {% elif app.status == 'Under Review' %}
+                            <span class="status-badge under-review">🔍 Under Review</span>
+                        {% elif app.status == 'Rejected' %}
+                            <span class="status-badge rejected">✕ Not Selected</span>
+                        {% else %}
+                            <span class="status-badge pending">⏳ Pending Review</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
 {% else %}
-<p>You have not applied to any jobs yet.</p>
+<div class="text-center py-5 bg-white rounded-3 border shadow-sm my-4">
+    <div style="font-size: 3rem; margin-bottom: 1rem;">📂</div>
+    <h3 class="fw-bold mb-2" style="color: var(--secondary);">No Applications Yet</h3>
+    <p class="text-muted mb-4" style="max-width: 420px; margin: 0 auto;">
+        You haven't applied to any job vacancies yet. Find your next opportunity and submit your resume today!
+    </p>
+    <a href="{{ url_for('index') }}" class="btn btn-primary px-4 py-2 fw-bold" style="background: var(--primary); border: none; border-radius: var(--radius-sm);">
+        Browse All Jobs →
+    </a>
+</div>
 {% endif %}
+
 {% endblock %}

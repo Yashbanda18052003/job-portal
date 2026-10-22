@@ -1,96 +1,212 @@
-/* Styles for the admin dashboard table */
-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 1.5rem;
-    background-color: #ffffff;
-    border-radius: 8px;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+/* ==========================================================================
+   JOBPORTAL ADMIN DASHBOARD STYLESHEET (COOL & ATTRACTIVE SAAS THEME)
+   ========================================================================== */
+
+/* Metric KPI Cards Grid */
+.admin-metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2.25rem;
+}
+
+.kpi-card {
+    background: #ffffff;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: 1.6rem;
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+    display: flex;
+    align-items: center;
+    gap: 1.15rem;
+    position: relative;
     overflow: hidden;
-    /* For rounded corners */
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-thead tr {
-    background-color: #f4f6f8;
-    border-bottom: 2px solid #ddd;
+.kpi-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: var(--border-color);
+    transition: background 0.2s ease;
 }
 
-th {
-    padding: 12px 15px;
-    text-align: left;
-    font-size: 0.9rem;
-    font-weight: 600;
-    color: #555;
+.kpi-card:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-hover);
+    border-color: #c7d2fe;
+}
+
+.kpi-card:hover::before {
+    background: var(--primary-gradient);
+}
+
+.kpi-icon-wrap {
+    width: 52px;
+    height: 52px;
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.6rem;
+    flex-shrink: 0;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+}
+
+.kpi-icon-wrap.purple {
+    background: linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%);
+    color: var(--primary);
+    border: 1px solid #c7d2fe;
+}
+
+.kpi-icon-wrap.green {
+    background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+    color: #059669;
+    border: 1px solid #a7f3d0;
+}
+
+.kpi-icon-wrap.amber {
+    background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+    color: #d97706;
+    border: 1px solid #fde68a;
+}
+
+.kpi-icon-wrap.blue {
+    background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+    color: #0284c7;
+    border: 1px solid #bae6fd;
+}
+
+.kpi-info .kpi-label {
+    font-size: 0.8rem;
+    font-weight: 800;
+    color: var(--text-muted);
     text-transform: uppercase;
+    letter-spacing: 0.6px;
+    margin-bottom: 2px;
 }
 
-tbody tr {
-    border-bottom: 1px solid #f0f0f0;
+.kpi-info .kpi-value {
+    font-size: 2rem;
+    font-weight: 800;
+    color: var(--secondary);
+    line-height: 1.1;
+    letter-spacing: -0.5px;
 }
 
-tbody tr:last-child {
+.kpi-info .kpi-sub {
+    font-size: 0.775rem;
+    color: var(--text-muted);
+    margin-top: 4px;
+}
+
+/* Admin Dashboard Section Cards */
+.admin-section-card {
+    background: #ffffff;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-xl);
+    box-shadow: 0 4px 12px -2px rgba(15, 23, 42, 0.05);
+    margin-bottom: 2.25rem;
+    overflow: hidden;
+}
+
+.admin-section-header {
+    padding: 1.35rem 1.75rem;
+    background: #ffffff;
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.admin-section-header h3 {
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: var(--secondary);
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    letter-spacing: -0.3px;
+}
+
+/* Admin Custom Tables */
+.admin-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+.admin-table th {
+    background: #f8fafc;
+    color: var(--text-muted);
+    font-size: 0.75rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    padding: 13px 20px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.admin-table td {
+    padding: 15px 20px;
+    vertical-align: middle;
+    border-bottom: 1px solid #f1f5f9;
+    font-size: 0.9rem;
+    color: var(--text-main);
+}
+
+.admin-table tbody tr:hover {
+    background: #f8fafc;
+}
+
+.admin-table tbody tr:last-child td {
     border-bottom: none;
 }
 
-tbody tr:hover {
-    background-color: #f9f9f9;
-}
-
-td {
-    padding: 12px 15px;
-    vertical-align: middle;
-    color: #333;
-}
-
-/* --- Action Links --- */
-td a {
-    color: #007bff;
+/* Admin Action Buttons */
+.btn-admin-approve {
+    background: #ecfdf5;
+    color: #047857;
+    border: 1px solid #a7f3d0;
+    padding: 6px 14px;
+    border-radius: var(--radius-sm);
+    font-size: 0.8rem;
+    font-weight: 700;
     text-decoration: none;
-    font-weight: 500;
-    padding: 4px 8px;
-    border-radius: 4px;
-    transition: background-color 0.3s, color 0.3s;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    transition: all 0.15s ease;
 }
 
-td a:hover {
-    background-color: #e6f2ff;
+.btn-admin-approve:hover {
+    background: #d1fae5;
+    color: #065f46;
+    transform: translateY(-1px);
 }
 
-/* Example: Style "Revoke" link differently */
-td a[href*="revoke"] {
-    color: #dc3545;
-    /* Red */
-}
-
-td a[href*="revoke"]:hover {
-    background-color: #fbebed;
-}
-
-td {
-    padding: 8px;
-}
-
-td a {
-    margin-right: 8px;
+.btn-admin-revoke {
+    background: #fff1f2;
+    color: #e11d48;
+    border: 1px solid #fecdd3;
+    padding: 6px 14px;
+    border-radius: var(--radius-sm);
+    font-size: 0.8rem;
+    font-weight: 700;
     text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    transition: all 0.15s ease;
 }
 
-td a:hover {
-    text-decoration: underline;
-}
-
-td.status {
-    font-weight: bold;
-}
-
-.status-under-review {
-    color: orange;
-}
-
-.status-accepted {
-    color: green;
-}
-
-.status-rejected {
-    color: red;
+.btn-admin-revoke:hover {
+    background: #ffe4e6;
+    color: #be123c;
+    transform: translateY(-1px);
 }

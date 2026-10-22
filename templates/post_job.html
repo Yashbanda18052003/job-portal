@@ -5,16 +5,77 @@
 {% endblock %}
 
 {% block content %}
-<div class="form-container">
-    <h2>Post a Job</h2>
-    <form method="POST">
-        <input type="text" name="title" placeholder="Job Title" required><br>
-        <textarea name="description" placeholder="Job Description" rows="5" required></textarea><br>
-        <input type="text" name="salary" placeholder="Salary"><br>
-        <input type="text" name="location" placeholder="Location"><br>
-        <input type="text" name="category" placeholder="Category"><br>
-        <button type="submit">Post Job</button>
+<div class="post-job-container">
+    <div class="page-header">
+        <span class="badge bg-primary text-white mb-2 py-1 px-3 rounded-pill" style="font-size: 0.8rem; font-weight: 600;">
+            Employer Portal
+        </span>
+        <h2>Create a New Job Listing</h2>
+        <p class="text-muted mb-0">Publish an open vacancy for candidates across our network.</p>
+    </div>
+
+    <form method="POST" action="{{ url_for('post_job') }}"
+          data-confirm-form="Are you sure you want to publish this job vacancy for candidates across the platform?"
+          data-confirm-title="Publish Job Vacancy"
+          data-confirm-icon="🚀"
+          data-confirm-type="primary"
+          data-confirm-btn="Publish Vacancy">
+        <div class="form-group">
+            <label for="title">Job Title <span class="text-danger">*</span></label>
+            <div class="input-icon-group">
+                <span class="input-icon">💼</span>
+                <input type="text" id="title" name="title" placeholder="e.g. Senior Full-Stack Engineer" required>
+            </div>
+        </div>
+
+        <div class="form-grid-2">
+            <div class="form-group">
+                <label for="category">Category / Specialization</label>
+                <div class="input-icon-group">
+                    <span class="input-icon">📁</span>
+                    <input type="text" id="category" name="category" placeholder="e.g. Engineering, Design, Product" list="category-suggestions">
+                    <datalist id="category-suggestions">
+                        <option value="Software Engineering">
+                        <option value="Frontend Development">
+                        <option value="Backend Development">
+                        <option value="Data Science & AI">
+                        <option value="UI/UX Design">
+                        <option value="Product Management">
+                        <option value="DevOps & Cloud">
+                    </datalist>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="location">Location</label>
+                <div class="input-icon-group">
+                    <span class="input-icon">📍</span>
+                    <input type="text" id="location" name="location" placeholder="e.g. Remote, New York, NY">
+                </div>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="salary">Compensation / Salary Range</label>
+            <div class="input-icon-group">
+                <span class="input-icon">💰</span>
+                <input type="text" id="salary" name="salary" placeholder="e.g. $110,000 - $140,000 / year or Competitive">
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="description">Job Description & Responsibilities <span class="text-danger">*</span></label>
+            <textarea id="description" name="description" rows="7" class="form-control" style="border-radius: var(--radius-sm); border: 1.5px solid var(--border-color); padding: 1rem; font-size: 0.95rem;" placeholder="Describe the role, key responsibilities, qualifications, and benefits..." required></textarea>
+        </div>
+
+        <div class="d-flex align-items-center justify-content-between mt-4 pt-3 border-top">
+            <a href="{{ url_for('index') }}" class="btn btn-outline-secondary px-4 py-2" style="border-radius: var(--radius-sm); font-weight: 600;">
+                Cancel
+            </a>
+            <button type="submit" class="btn btn-primary px-5 py-2" style="border-radius: var(--radius-sm); font-weight: 700; background: var(--primary); border: none; box-shadow: 0 4px 12px rgba(79, 70, 229, 0.25);">
+                🚀 Publish Vacancy
+            </button>
+        </div>
     </form>
 </div>
 {% endblock %}
-

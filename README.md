@@ -1,82 +1,236 @@
-# Job Portal Web Application
+# 💼 JobPortal — Modern Career & Hiring Web Application
 
-## Overview
-A web-based recruitment job portal built with Python and Flask. The platform enables job seekers to explore open listings and submit applications with uploaded resumes, while allowing employers and admins to post job openings and review candidate submissions.
+[![Python](https://img.shields.io/badge/Python-3.10%2B-blue.svg?logo=python&logoColor=white)](https://www.python.org/)
+[![Flask](https://img.shields.io/badge/Flask-3.x-black.svg?logo=flask&logoColor=white)](https://flask.palletsprojects.com/)
+[![SQLAlchemy](https://img.shields.io/badge/SQLAlchemy-ORM-red.svg)](https://www.sqlalchemy.org/)
+[![Bootstrap](https://img.shields.io/badge/Bootstrap-5.3-purple.svg?logo=bootstrap&logoColor=white)](https://getbootstrap.com/)
+[![SQLite](https://img.shields.io/badge/Database-SQLite-003B57.svg?logo=sqlite&logoColor=white)](https://www.sqlite.org/)
+[![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
-## Features
-- **User Authentication:** Registration and authentication for Job Seekers and Employers/Admins using password hashing.
-- **Job Postings Management:** Employers can create, update, and manage job listings with location, salary, and qualification requirements.
-- **Application Workflow:** Applicants can apply to open positions and attach PDF resumes.
-- **Applicant Management:** Employers can review candidate profiles, inspect submitted resumes, and track application records.
-- **Admin Panel:** Administrative interface for overseeing job postings and portal users.
+A recruitment and job portal web application built with **Python**, **Flask**, and **SQLAlchemy**. Designed with a modern, high-contrast SaaS interface, role-based access control (RBAC), multi-criteria search & filtering, real-time application status tracking, secure PDF resume uploading, and custom in-page confirmation workflows.
 
-## Tech Stack
-- **Backend:** Python, Flask, Flask-SQLAlchemy, Flask-Login
-- **Database:** SQLite (Development) / MySQL compatible
-- **Frontend:** HTML5, CSS3, JavaScript, Bootstrap
+---
 
-## Project Structure
+## 📑 Table of Contents
+- [✨ Key Highlights](#-key-highlights)
+- [📸 User Interface Showcase](#-user-interface-showcase)
+- [⚡ Quick Demo Credentials](#-quick-demo-credentials)
+- [🚀 Features by Role](#-features-by-role)
+- [🛠️ Tech Stack](#️-tech-stack)
+- [📂 Project Architecture](#-project-architecture)
+- [⚙️ Installation & Running Locally](#️-installation--running-locally)
+- [📊 Database Schema](#-database-schema)
+- [👤 Author](#-author)
+
+---
+
+## ✨ Key Highlights
+
+- **🎨 Modern SaaS UI & Palette:** Electric Indigo & Cyber Violet branding with glassmorphic sticky navigation, responsive job cards, and ambient background lighting.
+- **🔍 Multi-Column Job Filtering:** Real-time keyword search, interactive category selector, location search, and 1-click **Trending Search Pills** (*Remote, Backend, Frontend, AI & Data*).
+- **🛡️ Custom In-Page Confirmation Modals:** Replaced native browser popups with custom frosted-glass confirmation dialogs for sign out, candidate decisions, and vacancy publishing.
+- **📁 Secure PDF Resume Uploads:** PDF file upload dropzone with client-side validation and collision-safe file naming (`resume_u{user_id}_j{job_id}_{timestamp}.pdf`).
+- **🔔 Toast Alert System:** Notification banners with animated status icons (`✓` Success, `✕` Danger, `⚠️` Warning, `ℹ️` Info) that smoothly auto-dismiss after 4.5 seconds.
+- **👥 Role-Based Access Control:** Distinct user flows for **Administrators**, verified **Employers**, and **Job Seekers**.
+
+---
+
+## 📸 User Interface Showcase
+
+| 🌟 Home Page & Job Search | 🛡️ Administrator Dashboard |
+| :---: | :---: |
+| ![Home Page](assets/screenshots/Home%20page-Job%20portal.png) | ![Admin Dashboard](assets/screenshots/Admin%20page-job%20portal.png) |
+
+| 🔐 Authentication & Role Registration | 🏢 Post New Vacancy |
+| :---: | :---: |
+| ![Register Page](assets/screenshots/Register%20page-job%20portal.png) | ![Add Job Page](assets/screenshots/Add%20job%20page-job%20portal.png) |
+
+| 📄 Candidate Application View | 📬 Employer Applications Review |
+| :---: | :---: |
+| ![My Applications](assets/screenshots/User%20application%20view%20page-job%20portal.png) | ![Employer Review](assets/screenshots/Employer%20application%20view%20page%20-%20job%20portal.png) |
+
+---
+
+## ⚡ Quick Demo Credentials
+
+A default administrator account is automatically verified upon launching the application:
+
+| Role | Email Address | Password | Permissions |
+| :--- | :--- | :--- | :--- |
+| **Super Admin** | `admin@jobportal.com` | `admin123` | System monitoring, employer approval/revocation, full applicant records |
+| **Employer** | *(Register with "Hire Talent")* | *(Your password)* | Post vacancies, review incoming resumes, accept/reject candidates *(requires admin approval)* |
+| **Candidate** | *(Register with "Find a Job")* | *(Your password)* | Instant access to explore listings, upload PDF resume, track application status |
+
+---
+
+## 🚀 Features by Role
+
+### 🛡️ Super Administrator
+* **KPI Metrics Overview:** Real-time counts of Candidates, Employers, Active Job Openings, and Resumes Submitted.
+* **Employer Verification:** Review pending employer registrations and approve or revoke posting permissions.
+* **Master Applications Oversight:** View all platform applications with direct access to inspect submitted PDF resumes.
+* **Status Decision Controls:** Transition application status across `Pending`, `Under Review`, `Accepted`, and `Rejected`.
+
+### 🏢 Hiring Employer
+* **Interactive Registration:** Toggle between Candidate and Employer during sign up; dynamic company name requirement.
+* **Publish Vacancies:** Create listings with job title, compensation range, location, category suggestions, and detailed descriptions.
+* **Received Applications Dashboard:** Dedicated employer portal to review candidates who applied for their specific openings with instant resume downloads.
+* **Status Updates:** Update applicants directly to `Under Review`, `Accepted`, or `Rejected`.
+
+### 👤 Job Seeker / Candidate
+* **Explore Openings:** Filter by keyword, category, location, or click popular trending search tags.
+* **Seamless Application:** Two-column apply view with full job details and a PDF dropzone with live filename preview.
+* **Duplicate Application Prevention:** Prevents accidental double submissions for the same role.
+* **Application Tracker:** Personal dashboard displaying real-time application status badges (`⏳ Pending Review`, `🔍 Under Review`, `✓ Accepted`, `✕ Not Selected`).
+
+---
+
+## 🛠️ Tech Stack
+
+* **Backend Framework:** [Flask 3.x](https://flask.palletsprojects.com/) (Python)
+* **Database & ORM:** [Flask-SQLAlchemy](https://flask-sqlalchemy.palletsprojects.com/) with [SQLite](https://www.sqlite.org/)
+* **Authentication:** [Flask-Login](https://flask-login.readthedocs.io/) & [Werkzeug Security](https://werkzeug.palletsprojects.com/) (Password Hashing)
+* **Frontend UI:** HTML5, CSS3, JavaScript, [Bootstrap 5.3](https://getbootstrap.com/), [Plus Jakarta Sans](https://fonts.google.com/specimen/Plus+Jakarta+Sans) Google Font
+* **File Handling:** Secure PDF resume uploads via Werkzeug `secure_filename`
+
+---
+
+## 📂 Project Architecture
+
 ```
 job-portal/
-├── app.py              # Application entry point & route definitions
-├── config.py           # Application configurations
-├── requirements.txt    # Python dependencies list
-├── static/             # CSS styling, JS scripts, and uploaded media
-├── templates/          # HTML Jinja2 templates (Job views, Admin panel)
-└── instance/           # Local SQLite instance (Development only)
+├── app.py                      # Application factory, database models & route controllers
+├── config.py                   # Flask & SQLAlchemy configuration
+├── requirements.txt            # Python dependencies
+├── run_app.bat                 # 1-Click Windows startup launcher
+├── README.md                   # Project documentation
+│
+├── assets/
+│   └── screenshots/            # UI screenshots for documentation
+│
+├── instance/
+│   └── jobportal.db            # SQLite database file (auto-initialized)
+│
+├── static/
+│   ├── css/
+│   │   ├── base.css            # Design tokens, glassmorphic navbar, toasts & modal dialogs
+│   │   ├── index.css           # Hero section, floating search card, job grid & avatars
+│   │   ├── forms.css           # Auth cards, role switcher tiles & form controls
+│   │   ├── admin.css           # Metric KPI cards & administrative data tables
+│   │   └── application.css     # PDF dropzone, application status badges & tracking
+│   ├── js/
+│   │   ├── base.js             # Legacy query param toast handler
+│   │   └── register.js         # Interactive role switcher logic
+│   └── resumes/                # Secure storage for uploaded candidate PDF resumes
+│
+└── templates/
+    ├── base.html               # Master layout (Navbar, Toasts, Confirmation Modal, Footer)
+    ├── index.html              # Home page with search, trending tags & job listings
+    ├── login.html              # Clean authentication page
+    ├── register.html           # Role selection registration (Candidate vs. Employer)
+    ├── post_job.html           # Job vacancy creation form
+    ├── apply_job.html          # Two-column job description & resume upload dropzone
+    ├── my_applications.html    # Candidate application tracking dashboard
+    ├── applications.html       # Employer received applications & decision controls
+    └── admin.html              # Superuser administration dashboard
 ```
 
-## Installation
+---
 
-1. **Clone the repository:**
-   ```bash
-   git clone https://github.com/Yashbanda18052003/job-portal.git
-   cd job-portal
-   ```
+## ⚙️ Installation & Running Locally
 
-2. **Create and activate a virtual environment:**
-   ```bash
-   python -m venv env
-   # On Windows:
-   env\Scripts\activate
-   # On macOS/Linux:
-   source env/bin/activate
-   ```
+### Prerequisites
+* **Python 3.10+** installed on your system.
+* **Git** installed on your system.
 
-3. **Install dependencies:**
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-## Environment Variables
-Create a `.env` file in the root directory:
-```env
-SECRET_KEY=your_random_secret_key
-DATABASE_URL=sqlite:///instance/jobportal.db
-```
-
-## Database Setup
-
-Initialize database tables automatically on first run via Flask-SQLAlchemy:
+### 1. Clone the Repository
 ```bash
-python -c "from app import app, db; app.app_context().push(); db.create_all()"
+git clone https://github.com/Yashbanda18052003/job-portal.git
+cd job-portal
 ```
 
-## How to Run
+### 2. Set Up a Virtual Environment
+```bash
+# Windows
+python -m venv env
+env\Scripts\activate
 
+# macOS / Linux
+python3 -m venv env
+source env/bin/activate
+```
+
+### 3. Install Required Dependencies
+```bash
+pip install -r requirements.txt
+```
+
+### 4. Run the Application
+
+**Option A — Windows 1-Click Launcher:**
+Double-click `run_app.bat` in the root folder.
+
+**Option B — Terminal:**
 ```bash
 python app.py
 ```
-Navigate to `http://127.0.0.1:5000` in your web browser.
 
-## Screenshots
-*(Add project screenshots here)*
+Open your browser and navigate to:
+```
+http://127.0.0.1:5000
+```
 
-## Future Improvements
-- Migration of resume storage from local disk to AWS S3 or Cloudinary.
-- Email notifications for applicants when job status changes.
-- Keyword-based search and skill filtering for job listings.
+> **Note:** The SQLite database and seed administrator (`admin@jobportal.com` / `admin123`) are automatically initialized on the first application launch.
 
-## Author
+---
+
+## 📊 Database Schema
+
+```mermaid
+erDiagram
+    USER ||--o{ JOB : posts
+    USER ||--o{ APPLICATION : submits
+    JOB ||--o{ APPLICATION : receives
+
+    USER {
+        int id PK
+        string username UK
+        string email UK
+        string password
+        boolean is_employer
+        boolean is_admin
+        boolean is_approved
+        string company
+        datetime date_created
+    }
+
+    JOB {
+        int id PK
+        string title
+        text description
+        string salary
+        string location
+        string category
+        string company
+        int posted_by FK
+        string status
+        datetime created_at
+    }
+
+    APPLICATION {
+        int id PK
+        int user_id FK
+        int job_id FK
+        string resume
+        string status
+        datetime applied_on
+    }
+```
+
+---
+
+## 👤 Author
+
 **Yash Banda**  
-LinkedIn: [linkedin.com/in/yash-banda-829633259](https://www.linkedin.com/in/yash-banda-829633259/)
+* GitHub: [@Yashbanda18052003](https://github.com/Yashbanda18052003)  
+* LinkedIn: [linkedin.com/in/yash-banda-829633259](https://www.linkedin.com/in/yash-banda-829633259/)

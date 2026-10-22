@@ -1,46 +1,260 @@
 {% extends 'base.html' %}
 
-{% block content %}
-<h2>Available Jobs</h2>
-<!-- Inside the <head> tag -->
+{% block head %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/index.css') }}">
+{% endblock %}
 
-<!-- Search & Filter Form -->
-<form method="GET" action="{{ url_for('index') }}" class="job-filter-form">
-    <select name="category">
-        <option value="">All Categories</option>
-        {% set categories = jobs|map(attribute='category')|unique %}
-        {% for cat in categories %}
-        <option value="{{ cat }}" {% if cat==category %}selected{% endif %}>{{ cat }}</option>
-        {% endfor %}
-    </select>
+{% block content %}
 
-    <input type="text" name="location" placeholder="Location" value="{{ location or '' }}">
-    <input type="text" name="company" placeholder="Company" value="{{ company or '' }}">
-    <input type="number" name="min_salary" placeholder="Min Salary" value="{{ min_salary or '' }}">
-    <input type="number" name="max_salary" placeholder="Max Salary" value="{{ max_salary or '' }}">
+<!-- HERO SECTION & SEARCH CARD -->
+<section class="hero-container text-center mb-5">
+    <div class="hero-content">
+        <span class="badge-hero">🚀 Connect With Leading Employers</span>
+        <h1 class="hero-heading">Find Your Next <span class="gradient-text">Dream Career</span></h1>
+        <p class="hero-subtext">
+            Explore verified opportunities across top software engineering, backend, and technical teams.
+        </p>
 
-    <button type="submit" class="btn-search">Search / Filter</button>
-</form>
+        <!-- UNIFIED FLOATING SEARCH & FILTER CARD -->
+        <div class="filter-card-wrapper shadow-lg">
+            <form method="GET" action="{{ url_for('index') }}" class="search-filter-grid">
+                <!-- Keyword Input -->
+                <div class="filter-col">
+                    <label class="filter-label">Search Keyword</label>
+                    <div class="input-with-icon">
+                        <span class="icon">🔍</span>
+                        <input type="text" name="search" placeholder="Job title, keywords, or company..." value="{{ search or '' }}">
+                    </div>
+                </div>
 
-<!-- Jobs Listing -->
-<div class="jobs-container">
-    {% if jobs %}
-    {% for job in jobs %}
-    <div class="job-card">
-        <h3>{{ job.title }}</h3>
-        <p><strong>Company:</strong> {{ job.company }}</p>
-        <p><strong>Location:</strong> {{ job.location }}</p>
-        <p><strong>Salary:</strong> {{ job.salary or 'Not specified' }}</p>
-        <p>{{ job.description[:150] }}{% if job.description|length > 150 %}...{% endif %}</p>
+                <!-- Custom Category Dropdown -->
+                <div class="filter-col">
+                    <label class="filter-label">Category</label>
+                    <div class="custom-select-wrapper" id="categoryDropdownWrapper">
+                        <input type="hidden" name="category" id="selectedCategoryInput" value="{{ category or '' }}">
+                        <button type="button" class="custom-select-trigger" id="categoryDropdownBtn" aria-haspopup="listbox" aria-expanded="false">
+                            <span class="d-flex align-items-center gap-2 text-truncate">
+                                <span class="icon">📁</span>
+                                <span class="trigger-label" id="categoryTriggerLabel">
+                                    {{ category if category else 'All Categories' }}
+                                </span>
+                            </span>
+                            <svg class="chevron-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="6 9 12 15 18 9"></polyline>
+                            </svg>
+                        </button>
 
-        {% if user and not user.is_employer %}
-        <a href="{{ url_for('apply_job', job_id=job.id) }}" class="btn-apply">Apply Now</a>
+                        <div class="custom-dropdown-menu" id="categoryDropdownMenu" role="listbox">
+                            <div class="dropdown-item-opt {% if not category %}selected{% endif %}" data-value="" role="option">
+                                <span class="opt-text">All Categories</span>
+                                {% if not category %}<span class="opt-check">✓</span>{% endif %}
+                            </div>
+                            {% for cat in categories %}
+                                <div class="dropdown-item-opt {% if cat == category %}selected{% endif %}" data-value="{{ cat }}" role="option">
+                                    <span class="opt-text">{{ cat }}</span>
+                                    {% if cat == category %}<span class="opt-check">✓</span>{% endif %}
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Location Input -->
+                <div class="filter-col">
+                    <label class="filter-label">Location</label>
+                    <div class="input-with-icon">
+                        <span class="icon">📍</span>
+                        <input type="text" name="location" placeholder="City or Remote..." value="{{ location or '' }}">
+                    </div>
+                </div>
+
+                <!-- Action Button -->
+                <div class="filter-col-btn">
+                    <button type="submit" class="btn-search-jobs">
+                        <span>Search Jobs</span>
+                    </button>
+                    {% if search or category or location or company %}
+                        <a href="{{ url_for('index') }}" class="btn-clear-filters" title="Reset all filters">✕ Clear</a>
+                    {% endif %}
+                </div>
+            </form>
+        </div>
+
+        <!-- TRENDING QUICK SEARCH PILLS -->
+        <div class="trending-pills-row">
+            <span class="trending-label">🔥 Trending:</span>
+            <a href="{{ url_for('index', location='Remote') }}" class="trending-pill {% if location == 'Remote' %}active{% endif %}">🌐 Remote</a>
+            <a href="{{ url_for('index', category='Backend Engineering') }}" class="trending-pill {% if category == 'Backend Engineering' %}active{% endif %}">⚙️ Backend</a>
+            <a href="{{ url_for('index', category='Frontend Development') }}" class="trending-pill {% if category == 'Frontend Development' %}active{% endif %}">🎨 Frontend</a>
+            <a href="{{ url_for('index', category='Software Engineering') }}" class="trending-pill {% if category == 'Software Engineering' %}active{% endif %}">💻 Software</a>
+            <a href="{{ url_for('index', category='Data Science & AI') }}" class="trending-pill {% if category == 'Data Science & AI' %}active{% endif %}">🤖 AI & Data</a>
+        </div>
+    </div>
+</section>
+
+<!-- JOBS SECTION HEADER -->
+<section class="jobs-list-section">
+    <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom">
+        <div>
+            <h2 class="section-title mb-1">Available Job Openings</h2>
+            <p class="text-muted small mb-0">
+                {% if jobs %}
+                    Showing {{ jobs|length }} active positions matching your criteria
+                {% else %}
+                    No matching positions found
+                {% endif %}
+            </p>
+        </div>
+        {% if user.is_authenticated and user.is_employer and user.is_approved %}
+            <a href="{{ url_for('post_job') }}" class="btn-post-quick">+ Post New Job</a>
         {% endif %}
     </div>
-    {% endfor %}
+
+    <!-- JOBS GRID -->
+    {% if jobs %}
+        {% set grad_classes = ['avatar-indigo', 'avatar-teal', 'avatar-emerald', 'avatar-rose', 'avatar-amber'] %}
+        <div class="jobs-grid">
+            {% for job in jobs %}
+                <div class="job-card">
+                    <div class="card-header-top d-flex justify-content-between align-items-start">
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="company-avatar {{ grad_classes[job.id % 5] }}">
+                                {{ (job.company or job.title)[0]|upper }}
+                            </div>
+                            <div>
+                                <h3 class="job-title" title="{{ job.title }}">{{ job.title }}</h3>
+                                <div class="company-name text-muted">
+                                    🏢 {{ job.company or "Verified Employer" }}
+                                </div>
+                            </div>
+                        </div>
+                        <span class="badge-status-open">Open</span>
+                    </div>
+
+                    <!-- META BADGES -->
+                    <div class="job-pills-row">
+                        {% if job.location %}
+                            <span class="pill-meta pill-location">📍 {{ job.location }}</span>
+                        {% endif %}
+                        {% if job.category %}
+                            <span class="pill-meta pill-category">💼 {{ job.category }}</span>
+                        {% endif %}
+                        {% if job.salary %}
+                            <span class="pill-meta pill-salary">💰 {{ job.salary }}</span>
+                        {% endif %}
+                    </div>
+
+                    <!-- DESCRIPTION PREVIEW -->
+                    <p class="job-desc-preview">
+                        {{ job.description[:140] }}{% if job.description|length > 140 %}...{% endif %}
+                    </p>
+
+                    <!-- CARD FOOTER ACTIONS -->
+                    <div class="card-action-footer d-flex justify-content-between align-items-center pt-3 border-top mt-auto">
+                        <span class="posted-time text-muted small">
+                            📅 {{ job.created_at.strftime('%d %b %Y') }}
+                        </span>
+
+                        {% if not user.is_authenticated or (not user.is_employer and not user.is_admin) %}
+                            <a href="{{ url_for('apply_job', job_id=job.id) }}" class="btn-apply-card">
+                                <span>Apply Now</span> &rarr;
+                            </a>
+                        {% elif user.is_employer and job.posted_by == user.id %}
+                            <a href="{{ url_for('view_applications') }}" class="btn-view-app-card">
+                                View Applicants &rarr;
+                            </a>
+                        {% elif user.is_admin %}
+                            <a href="{{ url_for('admin_dashboard') }}" class="btn-admin-manage">
+                                Admin Manage &rarr;
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
     {% else %}
-    <p>No jobs available at the moment.</p>
+        <!-- EMPTY STATE -->
+        <div class="empty-state-card text-center py-5 my-4">
+            <div class="empty-state-icon">💼</div>
+            <h3>No Jobs Found</h3>
+            <p class="text-muted">
+                {% if search or category or location %}
+                    We couldn't find any job openings matching your search criteria. Try removing some filters.
+                {% else %}
+                    There are no job postings active right now. Please check back later.
+                {% endif %}
+            </p>
+            {% if search or category or location %}
+                <a href="{{ url_for('index') }}" class="btn btn-outline-primary px-4 py-2 rounded-pill mt-2">
+                    Clear All Filters
+                </a>
+            {% endif %}
+        </div>
     {% endif %}
-</div>
+</section>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+        const wrapper = document.getElementById("categoryDropdownWrapper");
+        const trigger = document.getElementById("categoryDropdownBtn");
+        const hiddenInput = document.getElementById("selectedCategoryInput");
+        const triggerLabel = document.getElementById("categoryTriggerLabel");
+        const options = document.querySelectorAll(".dropdown-item-opt");
+
+        if (!wrapper || !trigger) return;
+
+        // Toggle dropdown open/close
+        trigger.addEventListener("click", (e) => {
+            e.stopPropagation();
+            const isOpen = wrapper.classList.toggle("open");
+            trigger.setAttribute("aria-expanded", isOpen);
+        });
+
+        // Option click selection
+        options.forEach(opt => {
+            opt.addEventListener("click", (e) => {
+                e.stopPropagation();
+                const val = opt.getAttribute("data-value");
+                const text = opt.querySelector(".opt-text").textContent.trim();
+
+                hiddenInput.value = val;
+                triggerLabel.textContent = text;
+
+                // Update selected classes & checks
+                options.forEach(o => {
+                    o.classList.remove("selected");
+                    const chk = o.querySelector(".opt-check");
+                    if (chk) chk.remove();
+                });
+                opt.classList.add("selected");
+                const checkEl = document.createElement("span");
+                checkEl.className = "opt-check";
+                checkEl.textContent = "✓";
+                opt.appendChild(checkEl);
+
+                // Close menu
+                wrapper.classList.remove("open");
+                trigger.setAttribute("aria-expanded", "false");
+            });
+        });
+
+        // Close when clicking outside or pressing Escape
+        document.addEventListener("click", (e) => {
+            if (!wrapper.contains(e.target)) {
+                wrapper.classList.remove("open");
+                trigger.setAttribute("aria-expanded", "false");
+            }
+        });
+
+        document.addEventListener("keydown", (e) => {
+            if (e.key === "Escape") {
+                wrapper.classList.remove("open");
+                trigger.setAttribute("aria-expanded", "false");
+            }
+        });
+    });
+</script>
 {% endblock %}

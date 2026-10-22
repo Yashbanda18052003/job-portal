@@ -1,19 +1,116 @@
 {% extends 'base.html' %}
 
-{% block content %}
-<h2>Job Applications</h2>
+{% block head %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/application.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom">
+    <div>
+        <span class="badge bg-primary text-white mb-1 py-1 px-3 rounded-pill" style="font-size: 0.775rem;">
+            Employer Portal
+        </span>
+        <h2 class="fw-bold mb-1" style="font-size: 1.6rem; color: var(--secondary);">Received Applications</h2>
+        <p class="text-muted small mb-0">Review candidates who applied to your published vacancies.</p>
+    </div>
+    <a href="{{ url_for('post_job') }}" class="btn btn-primary px-3 py-2 fw-bold" style="background: var(--primary); border: none; border-radius: var(--radius-sm); font-size: 0.875rem;">
+        + Post Another Job
+    </a>
+</div>
 
 {% if applications %}
-{% for app in applications %}
-<div class="application-card">
-    <h3>Job: {{ app.job.title }}</h3>
-    <p><strong>Applicant:</strong> {{ app.user.username }} ({{ app.user.email }})</p>
-    <p><strong>Applied On:</strong> {{ app.applied_on.strftime('%d %b %Y %H:%M') }}</p>
+<div class="applications-table-card shadow-sm p-0 overflow-hidden">
+    <div class="table-responsive">
+        <table class="custom-table mb-0">
+            <thead>
+                <tr>
+                    <th>Job Title</th>
+                    <th>Candidate</th>
+                    <th>Date Applied</th>
+                    <th>Resume</th>
+                    <th>Status</th>
+                    <th>Manage Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for app in applications %}
+                <tr>
+                    <td>
+                        <strong class="text-dark">{{ app.job.title if app.job else 'Job Unavailable' }}</strong>
+                    </td>
+                    <td>
+                        <div class="fw-bold text-dark">{{ app.user.username if app.user else 'Anonymous' }}</div>
+                        <div class="text-muted small" style="font-size: 0.8rem;">✉️ {{ app.user.email if app.user else '-' }}</div>
+                    </td>
+                    <td class="text-muted small">
+                        {{ app.applied_on.strftime('%b %d, %Y • %I:%M %p') }}
+                    </td>
+                    <td>
+                        {% if app.resume %}
+                        <a href="{{ url_for('uploaded_file', filename=app.resume) }}" target="_blank" class="btn-action-sm btn-action-view">
+                            📄 View PDF
+                        </a>
+                        {% else %}
+                        <span class="text-muted small">None</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if app.status == 'Accepted' %}
+                            <span class="status-badge accepted">✓ Accepted</span>
+                        {% elif app.status == 'Under Review' %}
+                            <span class="status-badge under-review">🔍 Under Review</span>
+                        {% elif app.status == 'Rejected' %}
+                            <span class="status-badge rejected">✕ Rejected</span>
+                        {% else %}
+                            <span class="status-badge pending">⏳ Pending</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <div class="d-flex align-items-center gap-1 flex-wrap">
+                            {% if app.status != 'Under Review' %}
+                            <a href="{{ url_for('change_application_status', app_id=app.id, new_status='Under Review') }}" class="btn-action-sm btn-action-review" title="Mark Under Review">
+                                🔍 Review
+                            </a>
+                            {% endif %}
+                            {% if app.status != 'Accepted' %}
+                            <a href="{{ url_for('change_application_status', app_id=app.id, new_status='Accepted') }}" class="btn-action-sm btn-action-accept" title="Accept Candidate"
+                               data-confirm="Are you sure you want to accept this candidate for this role?"
+                               data-confirm-title="Accept Candidate"
+                               data-confirm-icon="✓"
+                               data-confirm-type="success"
+                               data-confirm-btn="Accept Candidate">
+                                ✓ Accept
+                            </a>
+                            {% endif %}
+                            {% if app.status != 'Rejected' %}
+                            <a href="{{ url_for('change_application_status', app_id=app.id, new_status='Rejected') }}" class="btn-action-sm btn-action-reject" title="Reject Candidate"
+                               data-confirm="Are you sure you want to reject this applicant?"
+                               data-confirm-title="Reject Applicant"
+                               data-confirm-icon="✕"
+                               data-confirm-type="danger"
+                               data-confirm-btn="Reject Applicant">
+                                ✕ Reject
+                            </a>
+                            {% endif %}
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
 </div>
-{% endfor %}
 {% else %}
-<p>No applications received yet.</p>
+<div class="text-center py-5 bg-white rounded-3 border shadow-sm my-4">
+    <div style="font-size: 3rem; margin-bottom: 1rem;">📬</div>
+    <h3 class="fw-bold mb-2" style="color: var(--secondary);">No Applications Received Yet</h3>
+    <p class="text-muted mb-4" style="max-width: 420px; margin: 0 auto;">
+        As soon as candidates submit their applications for your job openings, they will appear here with instant resume downloads.
+    </p>
+    <a href="{{ url_for('post_job') }}" class="btn btn-primary px-4 py-2 fw-bold" style="background: var(--primary); border: none; border-radius: var(--radius-sm);">
+        + Post a Job Opening
+    </a>
+</div>
 {% endif %}
 
 {% endblock %}

@@ -1,16 +1,99 @@
 {% extends 'base.html' %}
 
-{% block content %}
-<h2>Apply for: {{ job.title }}</h2>
+{% block head %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/application.css') }}">
+{% endblock %}
 
-<p><strong>Company:</strong> {{ job.company }}</p>
-<p><strong>Location:</strong> {{ job.location }}</p>
-<p>{{ job.description }}</p>
+{% block content %}
+<div class="mb-3">
+    <a href="{{ url_for('index') }}" class="text-decoration-none text-muted small fw-bold">
+        ← Back to all job openings
+    </a>
+</div>
 
-<form method="POST" enctype="multipart/form-data">
-    <label for="resume">Upload Resume (PDF only):</label><br>
-    <input type="file" name="resume" accept=".pdf" required><br><br>
-    <button type="submit" class="btn-submit">Submit Application</button>
-</form>
+<div class="apply-page-grid">
+    <!-- LEFT: Job Details -->
+    <div class="job-detail-card">
+        <div class="job-header-info">
+            <span class="company-tag">🏢 {{ job.company or "Verified Employer" }}</span>
+            <h1 class="job-title-large">{{ job.title }}</h1>
+            <div class="job-meta-chips">
+                <span class="meta-chip">📍 {{ job.location or "Remote" }}</span>
+                <span class="meta-chip">📁 {{ job.category or "General" }}</span>
+                {% if job.salary %}
+                    <span class="meta-chip salary">💰 {{ job.salary }}</span>
+                {% endif %}
+            </div>
+        </div>
+
+        <div>
+            <h4 class="fw-bold mb-3" style="font-size: 1.1rem; color: var(--secondary);">About the Role</h4>
+            <div class="job-body-desc">{{ job.description }}</div>
+        </div>
+    </div>
+
+    <!-- RIGHT: Application Form -->
+    <div class="apply-action-card">
+        <h3 class="fw-bold mb-1" style="font-size: 1.3rem; color: var(--secondary);">Apply for Position</h3>
+        <p class="text-muted small mb-4">Submit your resume directly to {{ job.company or "the hiring team" }}.</p>
+
+        <form method="POST" action="{{ url_for('apply_job', job_id=job.id) }}" enctype="multipart/form-data" id="apply-form"
+              data-confirm-form="Are you sure you want to submit your application and PDF resume for this position?"
+              data-confirm-title="Submit Application"
+              data-confirm-icon="📄"
+              data-confirm-type="primary"
+              data-confirm-btn="Submit Application">
+            <!-- Custom Drag & Drop File Zone -->
+            <label class="fw-bold small mb-2 text-dark d-block">Upload Resume (.PDF)</label>
+            <div class="file-upload-zone" id="drop-zone">
+                <input type="file" name="resume" id="resume-input" accept=".pdf" required onchange="handleFileSelected(this)">
+                <span class="upload-icon">📄</span>
+                <div class="upload-title">Choose a PDF file or drag it here</div>
+                <div class="upload-sub">Maximum file size: 5MB &bull; PDF format only</div>
+            </div>
+
+            <!-- Selected File Info Pill -->
+            <div class="selected-file-pill" id="file-info-pill">
+                <span id="file-name-text">filename.pdf</span>
+                <span style="cursor: pointer;" onclick="clearSelectedFile()" title="Remove file">✕</span>
+            </div>
+
+            <button type="submit" class="btn btn-primary w-100 py-3 fw-bold shadow-sm" style="background: var(--primary); border: none; border-radius: var(--radius-sm); font-size: 1rem;">
+                🚀 Submit Application
+            </button>
+
+            <div class="text-center mt-3">
+                <small class="text-muted" style="font-size: 0.775rem;">
+                    🔒 Your resume is securely stored and shared exclusively with the hiring team.
+                </small>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function handleFileSelected(input) {
+        const file = input.files[0];
+        const pill = document.getElementById('file-info-pill');
+        const text = document.getElementById('file-name-text');
+        if (file) {
+            if (!file.name.toLowerCase().endsWith('.pdf')) {
+                alert('Please select a valid PDF file.');
+                input.value = '';
+                pill.style.display = 'none';
+                return;
+            }
+            text.textContent = '📄 ' + file.name + ' (' + (file.size / 1024).toFixed(1) + ' KB)';
+            pill.style.display = 'flex';
+        }
+    }
+
+    function clearSelectedFile() {
+        const input = document.getElementById('resume-input');
+        input.value = '';
+        document.getElementById('file-info-pill').style.display = 'none';
+    }
+</script>
 {% endblock %}

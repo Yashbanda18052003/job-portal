@@ -1,23 +1,110 @@
 {% extends "base.html" %}
+
 {% block head %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/forms.css') }}">
 {% endblock %}
+
 {% block content %}
+<div class="auth-wrapper">
+    <div class="auth-card">
+        <div class="auth-header">
+            <span class="auth-badge">🚀</span>
+            <h2>Create Your Account</h2>
+            <p>Join as a job candidate or hiring employer</p>
+        </div>
 
-<div class="form-container">
-    <h2>Register</h2>
-    <form method="POST">
-        <input type="text" name="username" placeholder="Username" required><br>
-        <input type="email" name="email" placeholder="Email" required><br>
-        <input type="password" name="password" placeholder="Password" required><br>
-        <label>
-            <input type="checkbox" name="is_employer"> Register as Employer
-        </label><br>
-        <input type="text" name="company" placeholder="Company Name (if employer)"><br>
-        <button type="submit">Register</button>
-    </form>
+        <form method="POST" action="{{ url_for('register') }}" id="register-form">
+            <!-- Role Selector Tabs -->
+            <label class="d-block text-start mb-2" style="font-size: 0.875rem; font-weight: 600;">I want to:</label>
+            <div class="role-picker">
+                <div class="role-option active" id="role-candidate-btn" onclick="selectRole(false)">
+                    <span class="role-icon">👤</span>
+                    <span class="role-title">Find a Job</span>
+                    <span class="role-desc">Candidate Account</span>
+                </div>
+                <div class="role-option" id="role-employer-btn" onclick="selectRole(true)">
+                    <span class="role-icon">🏢</span>
+                    <span class="role-title">Hire Talent</span>
+                    <span class="role-desc">Employer Account</span>
+                </div>
+            </div>
+
+            <!-- Hidden Checkbox that the backend reads: request.form.get('is_employer') == 'on' -->
+            <input type="checkbox" name="is_employer" id="employer-checkbox" style="display: none;">
+
+            <div class="form-group">
+                <label for="username">Full Name / Username</label>
+                <div class="input-icon-group">
+                    <span class="input-icon">👤</span>
+                    <input type="text" id="username" name="username" placeholder="e.g. Alex Johnson" required autocomplete="username">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="email">Work or Personal Email</label>
+                <div class="input-icon-group">
+                    <span class="input-icon">✉️</span>
+                    <input type="email" id="email" name="email" placeholder="name@example.com" required autocomplete="email">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="password">Create Password</label>
+                <div class="input-icon-group">
+                    <span class="input-icon">🔒</span>
+                    <input type="password" id="password" name="password" placeholder="At least 6 characters" required autocomplete="new-password">
+                </div>
+            </div>
+
+            <!-- Dynamic Employer Company Field -->
+            <div class="form-group d-none" id="company-field-container">
+                <label for="company-field">Company or Organization Name</label>
+                <div class="input-icon-group">
+                    <span class="input-icon">🏢</span>
+                    <input type="text" id="company-field" name="company" placeholder="e.g. Acme Technologies Inc.">
+                </div>
+                <small class="text-muted" style="font-size: 0.75rem; display: block; margin-top: 4px;">
+                    ℹ️ Employer accounts require admin verification before posting vacancies.
+                </small>
+            </div>
+
+            <button type="submit" class="btn-submit-auth">
+                <span>Create Free Account</span>
+                <span>→</span>
+            </button>
+        </form>
+
+        <div class="auth-footer">
+            Already registered? <a href="{{ url_for('login') }}">Log in to your account</a>
+        </div>
+    </div>
 </div>
-<script src="{{ url_for('static', filename='js/register.js') }}"></script>
+{% endblock %}
 
+{% block scripts %}
+<script>
+    function selectRole(isEmployer) {
+        const candidateBtn = document.getElementById('role-candidate-btn');
+        const employerBtn = document.getElementById('role-employer-btn');
+        const checkbox = document.getElementById('employer-checkbox');
+        const companyContainer = document.getElementById('company-field-container');
+        const companyInput = document.getElementById('company-field');
 
+        if (isEmployer) {
+            candidateBtn.classList.remove('active');
+            employerBtn.classList.add('active');
+            checkbox.checked = true;
+            companyContainer.classList.remove('d-none');
+            companyInput.required = true;
+            companyInput.focus();
+        } else {
+            employerBtn.classList.remove('active');
+            candidateBtn.classList.add('active');
+            checkbox.checked = false;
+            companyContainer.classList.add('d-none');
+            companyInput.required = false;
+            companyInput.value = '';
+        }
+    }
+</script>
 {% endblock %}

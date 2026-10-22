@@ -1,87 +1,273 @@
 {% extends "base.html" %}
 
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/application.css') }}">
+{% endblock %}
+
 {% block content %}
-<div class="form-container">
-    <h2>Admin Dashboard</h2>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
-
-    <!-- Employer Approval Section -->
-    <h3>Employers</h3>
-    <table>
-        <thead>
-            <tr>
-                <th>Username</th>
-                <th>Email</th>
-                <th>Company</th>
-                <th>Approved</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for emp in employers %}
-            <tr>
-                <td>{{ emp.username }}</td>
-                <td>{{ emp.email }}</td>
-                <td>{{ emp.company or "-" }}</td>
-                <td>{{ "Yes" if emp.is_approved else "No" }}</td>
-                <td>
-                    {% if not emp.is_approved %}
-                    <a href="{{ url_for('approve_employer', user_id=emp.id) }}">Approve</a>
-                    {% else %}
-                    <a href="{{ url_for('revoke_employer', user_id=emp.id) }}">Revoke</a>
-                    {% endif %}
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-
-    <hr>
-
-    <!-- Applications Overview Section -->
-    <h3>All Applications</h3>
-    <table>
-        <thead>
-            <tr>
-                <th>Job Title</th>
-                <th>Applicant</th>
-                <th>Email</th>
-                <th>Resume</th>
-                <th>Status</th>
-                <th>Action</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for app in applications %}
-            <tr>
-                <td>{{ app.job.title if app.job else '-' }}</td>
-
-                <!-- FIXED applicant relation -->
-                <td>{{ app.user.username if app.user else '-' }}</td>
-                <td>{{ app.user.email if app.user else '-' }}</td>
-
-                <td>
-                    {% if app.resume %}
-                    <a href="{{ url_for('uploaded_file', filename=app.resume) }}" target="_blank">View Resume</a>
-                    {% else %}
-                    -
-                    {% endif %}
-                </td>
-
-                <td>{{ app.status }}</td>
-
-                <td>
-                    <a href="{{ url_for('change_application_status', app_id=app.id, new_status='Under Review') }}">Under
-                        Review</a> |
-                    <a
-                        href="{{ url_for('change_application_status', app_id=app.id, new_status='Accepted') }}">Accept</a>
-                    |
-                    <a
-                        href="{{ url_for('change_application_status', app_id=app.id, new_status='Rejected') }}">Reject</a>
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+<div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom">
+    <div>
+        <span class="badge bg-dark text-white mb-1 py-1 px-3 rounded-pill" style="font-size: 0.775rem;">
+            Superuser Control Panel
+        </span>
+        <h2 class="fw-bold mb-1" style="font-size: 1.75rem; color: var(--secondary);">Administrator Dashboard</h2>
+        <p class="text-muted small mb-0">System-wide monitoring, employer verification, and candidate applications overview.</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="{{ url_for('index') }}" class="btn btn-outline-secondary px-3 py-2 fw-semibold" style="border-radius: var(--radius-sm); font-size: 0.875rem;">
+            ← Portal Home
+        </a>
+    </div>
 </div>
+
+<!-- 4 TOP METRIC KPI CARDS -->
+<div class="admin-metrics-grid">
+    <div class="kpi-card">
+        <div class="kpi-icon-wrap purple">👥</div>
+        <div class="kpi-info">
+            <div class="kpi-label">Candidates</div>
+            <div class="kpi-value">{{ total_candidates_count }}</div>
+            <div class="kpi-sub">Registered job seekers</div>
+        </div>
+    </div>
+
+    <div class="kpi-card">
+        <div class="kpi-icon-wrap amber">🏢</div>
+        <div class="kpi-info">
+            <div class="kpi-label">Employers</div>
+            <div class="kpi-value">{{ employers|length }}</div>
+            <div class="kpi-sub">
+                {% if pending_employers_count > 0 %}
+                    <span class="text-warning fw-bold">⚠️ {{ pending_employers_count }} awaiting approval</span>
+                {% else %}
+                    <span class="text-success fw-bold">✓ All approved</span>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="kpi-card">
+        <div class="kpi-icon-wrap blue">💼</div>
+        <div class="kpi-info">
+            <div class="kpi-label">Active Vacancies</div>
+            <div class="kpi-value">{{ jobs|length }}</div>
+            <div class="kpi-sub">Published job openings</div>
+        </div>
+    </div>
+
+    <div class="kpi-card">
+        <div class="kpi-icon-wrap green">📄</div>
+        <div class="kpi-info">
+            <div class="kpi-label">Applications</div>
+            <div class="kpi-value">{{ applications|length }}</div>
+            <div class="kpi-sub">Resumes submitted</div>
+        </div>
+    </div>
+</div>
+
+<!-- SECTION 1: EMPLOYER VERIFICATION -->
+<div class="admin-section-card">
+    <div class="admin-section-header">
+        <h3>🏢 Employer Approval & Permissions</h3>
+        <span class="badge bg-light text-dark border">{{ employers|length }} registered</span>
+    </div>
+    <div class="table-responsive">
+        <table class="admin-table">
+            <thead>
+                <tr>
+                    <th>Username</th>
+                    <th>Email Address</th>
+                    <th>Company Name</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for emp in employers %}
+                <tr>
+                    <td>
+                        <strong class="text-dark">{{ emp.username }}</strong>
+                    </td>
+                    <td class="text-muted">{{ emp.email }}</td>
+                    <td>
+                        <span class="fw-semibold text-primary">🏢 {{ emp.company or "Not Provided" }}</span>
+                    </td>
+                    <td>
+                        {% if emp.is_approved %}
+                            <span class="status-badge accepted">✓ Approved</span>
+                        {% else %}
+                            <span class="status-badge pending">⏳ Pending Approval</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if not emp.is_approved %}
+                            <a href="{{ url_for('approve_employer', user_id=emp.id) }}" class="btn-admin-approve"
+                               data-confirm="Are you sure you want to approve this employer account? They will be authorized to post vacancies."
+                               data-confirm-title="Approve Employer"
+                               data-confirm-icon="✓"
+                               data-confirm-type="success"
+                               data-confirm-btn="Approve Employer">
+                                ✓ Approve Employer
+                            </a>
+                        {% else %}
+                            <a href="{{ url_for('revoke_employer', user_id=emp.id) }}" class="btn-admin-revoke"
+                               data-confirm="Are you sure you want to revoke posting permissions for this employer?"
+                               data-confirm-title="Revoke Employer Permissions"
+                               data-confirm-icon="⚠️"
+                               data-confirm-type="danger"
+                               data-confirm-btn="Revoke Access">
+                                ✕ Revoke
+                            </a>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="5" class="text-center py-4 text-muted">
+                        No employer accounts registered yet.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- SECTION 2: ALL APPLICATIONS OVERVIEW -->
+<div class="admin-section-card">
+    <div class="admin-section-header">
+        <h3>📄 All Candidate Applications</h3>
+        <span class="badge bg-light text-dark border">{{ applications|length }} total</span>
+    </div>
+    <div class="table-responsive">
+        <table class="admin-table">
+            <thead>
+                <tr>
+                    <th>Job Title</th>
+                    <th>Candidate</th>
+                    <th>Applied On</th>
+                    <th>Resume File</th>
+                    <th>Current Status</th>
+                    <th>Update Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for app in applications %}
+                <tr>
+                    <td>
+                        <strong class="text-dark">{{ app.job.title if app.job else 'Unknown Job' }}</strong>
+                        <div class="text-muted small" style="font-size: 0.775rem;">🏢 {{ app.job.company if app.job else '-' }}</div>
+                    </td>
+                    <td>
+                        <div class="fw-bold">{{ app.user.username if app.user else 'Deleted User' }}</div>
+                        <div class="text-muted small" style="font-size: 0.775rem;">✉️ {{ app.user.email if app.user else '-' }}</div>
+                    </td>
+                    <td class="text-muted small">
+                        {{ app.applied_on.strftime('%b %d, %Y • %I:%M %p') }}
+                    </td>
+                    <td>
+                        {% if app.resume %}
+                        <a href="{{ url_for('uploaded_file', filename=app.resume) }}" target="_blank" class="btn-action-sm btn-action-view">
+                            📄 View PDF
+                        </a>
+                        {% else %}
+                        <span class="text-muted small">No file</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if app.status == 'Accepted' %}
+                            <span class="status-badge accepted">✓ Accepted</span>
+                        {% elif app.status == 'Under Review' %}
+                            <span class="status-badge under-review">🔍 Under Review</span>
+                        {% elif app.status == 'Rejected' %}
+                            <span class="status-badge rejected">✕ Rejected</span>
+                        {% else %}
+                            <span class="status-badge pending">⏳ Pending</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <div class="d-flex align-items-center gap-1 flex-wrap">
+                            {% if app.status != 'Under Review' %}
+                            <a href="{{ url_for('change_application_status', app_id=app.id, new_status='Under Review') }}" class="btn-action-sm btn-action-review" title="Mark Under Review">
+                                🔍 Review
+                            </a>
+                            {% endif %}
+                            {% if app.status != 'Accepted' %}
+                            <a href="{{ url_for('change_application_status', app_id=app.id, new_status='Accepted') }}" class="btn-action-sm btn-action-accept" title="Accept Candidate"
+                               data-confirm="Are you sure you want to accept this candidate for the position?"
+                               data-confirm-title="Accept Candidate"
+                               data-confirm-icon="✓"
+                               data-confirm-type="success"
+                               data-confirm-btn="Accept Candidate">
+                                ✓ Accept
+                            </a>
+                            {% endif %}
+                            {% if app.status != 'Rejected' %}
+                            <a href="{{ url_for('change_application_status', app_id=app.id, new_status='Rejected') }}" class="btn-action-sm btn-action-reject" title="Reject Candidate"
+                               data-confirm="Are you sure you want to mark this applicant as Rejected?"
+                               data-confirm-title="Reject Applicant"
+                               data-confirm-icon="✕"
+                               data-confirm-type="danger"
+                               data-confirm-btn="Reject Applicant">
+                                ✕ Reject
+                            </a>
+                            {% endif %}
+                        </div>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="6" class="text-center py-4 text-muted">
+                        No applications submitted across the platform yet.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- SECTION 3: ALL PUBLISHED JOBS -->
+<div class="admin-section-card">
+    <div class="admin-section-header">
+        <h3>💼 Published Vacancies Directory</h3>
+        <span class="badge bg-light text-dark border">{{ jobs|length }} active</span>
+    </div>
+    <div class="table-responsive">
+        <table class="admin-table">
+            <thead>
+                <tr>
+                    <th>Job Title</th>
+                    <th>Company</th>
+                    <th>Category</th>
+                    <th>Location</th>
+                    <th>Salary</th>
+                    <th>Date Posted</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for job in jobs %}
+                <tr>
+                    <td>
+                        <strong class="text-dark">{{ job.title }}</strong>
+                    </td>
+                    <td>🏢 {{ job.company or "-" }}</td>
+                    <td><span class="badge bg-light text-dark border">{{ job.category or "General" }}</span></td>
+                    <td>📍 {{ job.location or "Remote" }}</td>
+                    <td><span class="text-success fw-semibold">{{ job.salary or "Not disclosed" }}</span></td>
+                    <td class="text-muted small">{{ job.created_at.strftime('%b %d, %Y') }}</td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="6" class="text-center py-4 text-muted">
+                        No job vacancies published yet.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
 {% endblock %}
