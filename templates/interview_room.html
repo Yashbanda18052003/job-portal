@@ -55,7 +55,7 @@
         <div class="d-flex align-items-center gap-3">
             <div class="bg-light px-3 py-2 rounded-pill border small fw-bold text-muted d-flex align-items-center gap-2">
                 <span>⏱ Session:</span>
-                <span id="session-timer" class="text-dark">00:00</span>
+                <span id="session-timer" class="text-dark">Ready (00:00)</span>
             </div>
             <button type="button" class="btn btn-primary fw-bold px-4 py-2" style="border-radius: var(--radius-sm); background: var(--primary); border: none;" onclick="submitCompleteInterview()">
                 🏆 Complete & Score AI
@@ -69,6 +69,24 @@
          ============================================================================== -->
     <div id="round-1-container">
         
+        <!-- PRE-INTERVIEW READINESS & CAMERA/MIC CHECK BANNER -->
+        <div id="pre-interview-banner" class="alert border-0 shadow-sm d-flex flex-wrap align-items-center justify-content-between p-3 mb-4 rounded-3" style="background: linear-gradient(135deg, #eef2ff 0%, #f5f3ff 100%); border-left: 5px solid var(--primary) !important;">
+            <div class="d-flex align-items-center gap-3">
+                <span class="fs-3">🎙️</span>
+                <div>
+                    <h6 class="fw-bold mb-1" style="color: var(--secondary);">Device Setup & System Check</h6>
+                    <p class="mb-0 small text-muted">
+                        Test your webcam and microphone below. When you're ready to begin, click <strong>Start Interview Session</strong> to begin the timer and hear your first question.
+                    </p>
+                </div>
+            </div>
+            <div class="mt-2 mt-md-0">
+                <button type="button" id="btn-start-session" class="btn btn-primary fw-bold px-4 py-2 shadow-sm d-flex align-items-center gap-2" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); border: none; border-radius: var(--radius-md); font-size: 14.5px;" onclick="startInterviewSession()">
+                    <span>🚀</span> <span>Start Interview Session</span>
+                </button>
+            </div>
+        </div>
+
         <!-- VIDEO & AI PERSONA GRID -->
         <div class="f2f-grid">
             
@@ -508,15 +526,63 @@
     let synth = window.speechSynthesis;
     let speechUtterance = null;
     
-    // Timer
+    // Session State & Timer Management
+    let isSessionStarted = false;
+    let sessionTimerInterval = null;
     let sessionSeconds = 0;
-    setInterval(() => {
-        sessionSeconds++;
+
+    function updateTimerDisplay() {
         const mins = String(Math.floor(sessionSeconds / 60)).padStart(2, '0');
         const secs = String(sessionSeconds % 60).padStart(2, '0');
         const el = document.getElementById('session-timer');
         if (el) el.textContent = `${mins}:${secs}`;
-    }, 1000);
+    }
+
+    function startInterviewSession() {
+        if (isSessionStarted) return;
+        isSessionStarted = true;
+
+        // Start timer counting up
+        if (!sessionTimerInterval) {
+            sessionTimerInterval = setInterval(() => {
+                sessionSeconds++;
+                updateTimerDisplay();
+            }, 1000);
+        }
+        updateTimerDisplay();
+
+        // Update pre-interview banner
+        const banner = document.getElementById('pre-interview-banner');
+        if (banner) {
+            banner.className = 'alert alert-success border-0 shadow-sm d-flex flex-wrap align-items-center justify-content-between p-3 mb-4 rounded-3';
+            banner.style.background = 'linear-gradient(135deg, #ecfdf5 0%, #f0fdf4 100%)';
+            banner.style.borderLeft = '5px solid #10b981 !important';
+            banner.innerHTML = `
+                <div class="d-flex align-items-center gap-3">
+                    <span class="fs-4">🟢</span>
+                    <div>
+                        <h6 class="fw-bold mb-1 text-success">Interview Session In Progress</h6>
+                        <p class="mb-0 small text-muted">Timer is running. Speak or type your answers, and advance through the questions and technical round.</p>
+                    </div>
+                </div>
+                <div class="mt-2 mt-md-0 d-flex align-items-center gap-2">
+                    <span class="badge bg-success px-3 py-2 rounded-pill fw-bold">Live Session Active</span>
+                </div>
+            `;
+        }
+
+        // Update AI Interviewer status pill
+        const aiStatus = document.getElementById('ai-status-pill');
+        if (aiStatus) {
+            aiStatus.className = 'badge bg-success rounded-pill px-3 py-1';
+            aiStatus.textContent = 'Active Evaluator';
+        }
+
+        // Speak first question
+        setTimeout(() => {
+            speakCurrentQuestion();
+        }, 500);
+    }
 
     // ==============================================================================
     // INITIALIZATION
@@ -562,10 +628,9 @@
         // Initialize Speech Recognition if supported
         setupSpeechRecognition();
 
-        // Speak initial question welcome after a brief delay
-        setTimeout(() => {
-            speakCurrentQuestion();
-        }, 1200);
+        // Timer is stopped at Ready (00:00) until candidate clicks 'Start Interview Session'
+        const timerEl = document.getElementById('session-timer');
+        if (timerEl) timerEl.textContent = 'Ready (00:00)';
     });
 
     // ==============================================================================
@@ -648,6 +713,9 @@
     // TEXT-TO-SPEECH (AI Interviewer Voice)
     // ==============================================================================
     function speakCurrentQuestion() {
+        if (!isSessionStarted) {
+            startInterviewSession();
+        }
         if (!('speechSynthesis' in window)) return;
         synth.cancel();
 
@@ -807,8 +875,10 @@
         document.getElementById('btn-prev-q').disabled = (index === 0);
         document.getElementById('btn-next-q').textContent = (index === BUNDLE.face_to_face_questions.length - 1) ? 'Save Answer' : 'Save & Next Question →';
 
-        // Auto speak question
-        speakCurrentQuestion();
+        // Auto speak question only if session has been started
+        if (isSessionStarted) {
+            speakCurrentQuestion();
+        }
     }
 
     function nextQuestion() {
@@ -1005,6 +1075,11 @@
             lastCodeRunResult.language = currentLanguage;
         }
 
+        // Stop session timer
+        if (sessionTimerInterval) {
+            clearInterval(sessionTimerInterval);
+        }
+
         // Open Modal in Loading State
         const modalEl = document.getElementById('evaluationModal');
         const modal = new bootstrap.Modal(modalEl);
@@ -1020,6 +1095,7 @@
                     job_id: JOB_ID,
                     role_title: BUNDLE.role_title,
                     company: BUNDLE.company,
+                    bundle: BUNDLE,
                     answers: candidateAnswers,
                     code_submission: lastCodeRunResult
                 })

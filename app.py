@@ -629,6 +629,7 @@ def interview_hub():
 
 
 @app.route('/interview/<int:job_id>')
+@login_required
 def start_job_interview(job_id):
     """Launches the dual-round interview room tailored for a specific job."""
     job = Job.query.get_or_404(job_id)
@@ -642,6 +643,7 @@ def start_job_interview(job_id):
 
 
 @app.route('/interview/custom')
+@login_required
 def start_custom_interview():
     """Launches interview room for a selected domain track or custom role."""
     track = request.args.get('track', 'backend')
@@ -672,6 +674,7 @@ def start_custom_interview():
 
 
 @app.route('/api/run-code', methods=['POST'])
+@login_required
 def api_run_code():
     """Executes code via local or cloud compiler and returns output and diagnostics."""
     data = request.get_json() or {}
@@ -684,6 +687,7 @@ def api_run_code():
 
 
 @app.route('/api/submit-interview', methods=['POST'])
+@login_required
 def api_submit_interview():
     """Evaluates candidate face-to-face and coding performance, generating detailed report."""
     data = request.get_json() or {}
@@ -692,14 +696,18 @@ def api_submit_interview():
     company = data.get('company', 'Tech Innovations Inc.')
     answers = data.get('answers', [])
     code_submission = data.get('code_submission', {})
+    bundle = data.get('bundle')
     
-    job = db.session.get(Job, job_id) if job_id else None
-    bundle = interview_engine.get_interview_bundle(job=job, role_title=role_title, company=company)
+    # If client didn't supply bundle, reconstruct it
+    if not bundle or not isinstance(bundle, dict) or not bundle.get('face_to_face_questions'):
+        job = db.session.get(Job, job_id) if job_id else None
+        bundle = interview_engine.get_interview_bundle(job=job, role_title=role_title, company=company, randomize=False)
     
     evaluation = interview_engine.evaluate_candidate_session(bundle, answers, code_submission)
     
     if current_user.is_authenticated:
         try:
+            job = db.session.get(Job, job_id) if job_id else None
             mock = MockInterview(
                 user_id=current_user.id,
                 job_id=job.id if job else None,

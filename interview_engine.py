@@ -2,6 +2,7 @@ import os
 import sys
 import time
 import json
+import random
 import tempfile
 import subprocess
 import requests
@@ -118,7 +119,7 @@ FACE_TO_FACE_BANK = {
             'guidance': "Highlight your core stack, scalable systems you've worked on, and enthusiasm for the company mission."
         },
         {
-            'type': 'Technical Architecture',
+            'type': 'Technical Architecture & Caching',
             'question_template': "How do you design a database schema and caching strategy (e.g. with Redis) for high-frequency write and read operations? How do you prevent cache stampede and ensure transactional data consistency?",
             'expected_concepts': ['redis', 'caching', 'index', 'consistency', 'transactions', 'ttl', 'lock', 'acid'],
             'guidance': "Discuss caching patterns (cache-aside, write-through), database indexing, TTLs, and concurrency handling."
@@ -128,6 +129,30 @@ FACE_TO_FACE_BANK = {
             'question_template': "Describe a time in your career when a critical production service went down or suffered severe latency degradation. Walk me step-by-step through how you investigated, mitigated, and permanently resolved the root cause.",
             'expected_concepts': ['logs', 'metrics', 'root cause', 'rollback', 'postmortem', 'monitoring', 'reproduce'],
             'guidance': "Follow the STAR method (Situation, Task, Action, Result). Mention APM metrics, logs, rollbacks, and postmortems."
+        },
+        {
+            'type': 'Concurrency & Rate Limiting',
+            'question_template': "How do you handle API rate limiting and prevent race conditions or double-spending in a distributed backend environment with multiple worker nodes?",
+            'expected_concepts': ['token bucket', 'leaky bucket', 'distributed lock', 'redis', 'race condition', 'idempotency', 'optimistic locking'],
+            'guidance': "Explain Token Bucket/Leaky Bucket algorithms, idempotency keys, and distributed locking with Redis or DB row versioning."
+        },
+        {
+            'type': 'Microservices & Event-Driven Architecture',
+            'question_template': "When decomposing a monolithic system into microservices, how do you handle cross-service transactions and maintain eventual consistency without distributed deadlocks?",
+            'expected_concepts': ['saga', 'eventual consistency', 'kafka', 'message queue', 'outbox pattern', 'event-driven', 'cqrs'],
+            'guidance': "Discuss the Saga pattern (orchestration vs choreography), Outbox pattern, and asynchronous message brokers like Kafka/RabbitMQ."
+        },
+        {
+            'type': 'API Security & Resiliency',
+            'question_template': "How do you secure your backend endpoints against common vulnerabilities such as JWT forgery, SQL injection, and unauthorized privilege escalation? How do you implement circuit breakers for third-party dependencies?",
+            'expected_concepts': ['rbac', 'jwt', 'sanitization', 'circuit breaker', 'resilience4j', 'tls', 'owasp', 'least privilege'],
+            'guidance': "Cover OWASP Top 10, role-based access control (RBAC), token signature validation, and circuit breaker patterns for downstream failures."
+        },
+        {
+            'type': 'Database Query Optimization',
+            'question_template': "Suppose a critical reporting query taking 45 seconds is causing high CPU spikes on your primary PostgreSQL/MySQL instance. What query profiling tools and indexing strategies would you use to optimize it below 200ms?",
+            'expected_concepts': ['explain analyze', 'indexes', 'covering index', 'partitioning', 'read replica', 'n+1', 'query plan'],
+            'guidance': "Explain EXPLAIN ANALYZE, indexing strategies (B-Tree, compound, covering), read replicas, and eliminating N+1 queries."
         }
     ],
     'frontend': [
@@ -138,7 +163,7 @@ FACE_TO_FACE_BANK = {
             'guidance': "Emphasize responsive design, component architecture, design systems, and your passion for UX."
         },
         {
-            'type': 'Technical Architecture',
+            'type': 'Technical Architecture & Web Vitals',
             'question_template': "How do you optimize Core Web Vitals (Largest Contentful Paint, Interaction to Next Paint, Cumulative Layout Shift) in a large single-page or SSR application? How do you handle client-side state across deeply nested components?",
             'expected_concepts': ['web vitals', 'lcp', 'inp', 'cls', 'code splitting', 'lazy loading', 'memo', 'state management', 'bundle'],
             'guidance': "Mention code-splitting, tree shaking, SSR/SSG, CDN caching, memoization, and centralized state stores."
@@ -148,6 +173,30 @@ FACE_TO_FACE_BANK = {
             'question_template': "Imagine a major UI redesign release caused unexpected browser rendering bugs for 15% of your active users right before a product launch. How do you triage the issue, communicate with designers and backend teams, and roll out a quick fix?",
             'expected_concepts': ['reproduce', 'browser compatibility', 'feature flag', 'communication', 'hotfix', 'regression testing'],
             'guidance': "Explain feature flags, cross-browser debugging, transparent team communication, and regression testing."
+        },
+        {
+            'type': 'State Management & Re-render Optimization',
+            'question_template': "How do you diagnose and eliminate unnecessary re-renders in complex React/Vue applications with real-time streaming data? When do you choose local component state versus global stores like Redux, Zustand, or Pinia?",
+            'expected_concepts': ['re-render', 'memo', 'usecallback', 'usememo', 'zustand', 'redux', 'profiler', 'immutability'],
+            'guidance': "Discuss React DevTools Profiler, selector subscriptions, immutability, and fine-grained reactivity."
+        },
+        {
+            'type': 'Accessibility (a11y) & Design Systems',
+            'question_template': "How do you ensure accessibility (WCAG AA compliance) across complex custom components like modals, comboboxes, and dropdowns? How do you structure an extensible design system?",
+            'expected_concepts': ['aria', 'wcag', 'keyboard navigation', 'focus management', 'screen reader', 'contrast', 'semantic'],
+            'guidance': "Explain keyboard traps, ARIA roles/attributes, focus management (`tabindex`), color contrast, and reusable design tokens."
+        },
+        {
+            'type': 'Micro-Frontends & Build Tooling',
+            'question_template': "What are the trade-offs of micro-frontend architectures (e.g. Module Federation with Webpack/Vite)? How do you optimize production bundle sizes through tree-shaking and dynamic code-splitting?",
+            'expected_concepts': ['module federation', 'webpack', 'vite', 'tree shaking', 'code splitting', 'bundle analyzer', 'lazy'],
+            'guidance': "Discuss shared vendor dependencies, routing coordination, dynamic imports, and asset budgeting."
+        },
+        {
+            'type': 'Frontend Security & Hydration',
+            'question_template': "How do you protect your client application against Cross-Site Scripting (XSS), Content Security Policy (CSP) bypasses, and CSRF attacks? How does hydration work in SSR frameworks like Next.js?",
+            'expected_concepts': ['xss', 'csp', 'sanitization', 'hydration', 'ssr', 'csrf', 'innerhtml', 'cookies'],
+            'guidance': "Cover DOMPurify/sanitization, strict CSP headers, HttpOnly cookies, and SSR hydration mismatches."
         }
     ],
     'fullstack': [
@@ -158,16 +207,40 @@ FACE_TO_FACE_BANK = {
             'guidance': "Highlight end-to-end ownership, building features from DB schema up to polished interactive UI."
         },
         {
-            'type': 'Technical Architecture',
+            'type': 'Technical Architecture & API Contracts',
             'question_template': "How do you architect the communication and contract between your frontend application and backend APIs? Specifically, how do you manage authentication (JWT vs Sessions), CORS, rate limiting, and API payload versioning?",
             'expected_concepts': ['jwt', 'session', 'cors', 'rest', 'graphql', 'auth', 'rate limiting', 'versioning'],
             'guidance': "Discuss secure HTTP-only cookies, token refresh cycles, OpenAPI/Swagger contracts, and error payload structures."
         },
         {
-            'type': 'Incident & Incident Management',
+            'type': 'Tradeoffs & Technical Debt',
             'question_template': "Tell me about a project where you had to make a difficult tradeoff between developer velocity (shipping quickly) and architectural robustness (test coverage, scalability). How did you justify your choice to leadership?",
             'expected_concepts': ['tradeoff', 'mvp', 'technical debt', 'stakeholders', 'refactoring', 'tests'],
             'guidance': "Discuss MVP scoping, tech debt tracking, automated test suites, and stakeholder alignment."
+        },
+        {
+            'type': 'End-to-End Latency & Performance',
+            'question_template': "From the moment a user clicks a button to update a record until the UI reflects the change, walk through every layer of the request life-cycle. How do you optimize latency at the DNS, CDN, API gateway, ORM, and client rendering stages?",
+            'expected_concepts': ['cdn', 'dns', 'gateway', 'orm', 'optimistic update', 'round trip', 'http/2', 'caching'],
+            'guidance': "Discuss HTTP/2 multiplexing, CDN caching, database connection pooling, and optimistic UI updates."
+        },
+        {
+            'type': 'Real-Time Data Streaming & WebSockets',
+            'question_template': "How would you design a real-time collaborative workspace (like live documents or notifications) for 100,000 active users? How do you handle WebSocket connection drops and message synchronization?",
+            'expected_concepts': ['websocket', 'pub/sub', 'redis', 'socket.io', 'sse', 'reconnection', 'heartbeat', 'synchronization'],
+            'guidance': "Discuss WebSockets vs Server-Sent Events, Redis Pub/Sub backplane, client heartbeat reconnection, and conflict resolution."
+        },
+        {
+            'type': 'Zero-Downtime Data Migrations',
+            'question_template': "How do you execute a zero-downtime database schema migration on a high-traffic table with tens of millions of rows while keeping frontend and backend code backwards-compatible?",
+            'expected_concepts': ['expand and contract', 'zero downtime', 'migration', 'backwards compatible', 'dual write', 'column'],
+            'guidance': "Explain the Expand and Contract pattern, dual-writing, phased deprecation, and non-blocking schema alters."
+        },
+        {
+            'type': 'Automated Testing Pyramid',
+            'question_template': "How do you structure your automated testing pyramid (Unit, Integration, E2E) across fullstack projects to maintain high velocity without flaky pipelines?",
+            'expected_concepts': ['unit tests', 'integration', 'e2e', 'cypress', 'playwright', 'jest', 'mocking', 'ci/cd'],
+            'guidance': "Discuss test pyramids, isolating backend DB mocks, contract testing, and reliable E2E tests with Playwright or Cypress."
         }
     ],
     'data_ai': [
@@ -178,7 +251,7 @@ FACE_TO_FACE_BANK = {
             'guidance': "Focus on real-world datasets, business impact of your models, and your analytical mindset."
         },
         {
-            'type': 'Technical Architecture',
+            'type': 'Technical Architecture & Data Drift',
             'question_template': "How do you detect and combat data leakage and concept drift in a production ML pipeline? What strategies and evaluation metrics do you prioritize when dealing with highly imbalanced datasets?",
             'expected_concepts': ['drift', 'leakage', 'auc', 'f1', 'precision', 'recall', 'smote', 'cross-validation', 'monitoring'],
             'guidance': "Discuss F1-score, Precision-Recall AUC over Accuracy, stratification, feature stores, and drift monitoring."
@@ -188,6 +261,30 @@ FACE_TO_FACE_BANK = {
             'question_template': "Describe an instance where your model or analytical dashboard produced unexpected or counter-intuitive results in production. How did you validate whether it was bad input data, pipeline bug, or true underlying user behavior?",
             'expected_concepts': ['data quality', 'validation', 'eda', 'pipeline', 'root cause', 'unit tests'],
             'guidance': "Walk through data anomaly detection, outlier analysis, schema validation, and stakeholder communication."
+        },
+        {
+            'type': 'LLMs, RAG & Vector Databases',
+            'question_template': "How do you architect a high-precision Retrieval-Augmented Generation (RAG) system with LLMs? How do you handle chunking, embedding generation, vector indexing (e.g. Pinecone/Chroma), and hallucination evaluation?",
+            'expected_concepts': ['rag', 'vector database', 'embeddings', 'chunking', 'hallucination', 'reranking', 'cosine similarity'],
+            'guidance': "Cover semantic chunking strategies, dense embeddings, hybrid search (BM25 + vector), rerankers, and RAG evaluation."
+        },
+        {
+            'type': 'Model Serving & Inference Latency',
+            'question_template': "How do you serve machine learning models at scale with sub-50ms inference latency? Discuss quantization, batching, GPU vs CPU serving, and ONNX runtime.",
+            'expected_concepts': ['quantization', 'onnx', 'triton', 'batching', 'latency', 'tensorrt', 'caching'],
+            'guidance': "Explain model quantization (FP16, INT8), dynamic request batching, Triton inference server, and model distillation."
+        },
+        {
+            'type': 'Data Warehousing & ETL Pipelines',
+            'question_template': "How do you design scalable ETL/ELT pipelines using tools like Spark, Airflow, or dbt? How do you ensure idempotency, data lineage, and data freshness guarantees?",
+            'expected_concepts': ['airflow', 'spark', 'dbt', 'etl', 'elt', 'idempotent', 'data lake', 'lineage', 'schema'],
+            'guidance': "Discuss partitioning, backfills, idempotent DAGs, Delta Lake / Iceberg, and automated schema enforcement."
+        },
+        {
+            'type': 'Model Monitoring & MLOps',
+            'question_template': "Walk through your deployment strategy for ML models (e.g. shadow deployment, canary rollouts, A/B testing). How do you monitor production drift and automate model retraining?",
+            'expected_concepts': ['a/b test', 'shadow deployment', 'canary', 'mlflow', 'evidently', 'retraining', 'ground truth'],
+            'guidance': "Discuss shadow deployments to evaluate against live traffic without impacting users, tracking latency and ground truth feedback."
         }
     ],
     'devops': [
@@ -198,7 +295,7 @@ FACE_TO_FACE_BANK = {
             'guidance': "Emphasize infrastructure-as-code, reliability culture, and automation over manual toil."
         },
         {
-            'type': 'Technical Architecture',
+            'type': 'Technical Architecture & CI/CD',
             'question_template': "Walk us through designing a robust CI/CD pipeline from git push to a multi-region Kubernetes cluster. How do you implement zero-downtime blue/green or canary deployments, automated rollbacks, and secrets management?",
             'expected_concepts': ['kubernetes', 'ci/cd', 'blue/green', 'canary', 'secrets', 'vault', 'health checks', 'rollback'],
             'guidance': "Cover GitOps, container scanning, canary metrics, health checks, and secure secrets injection."
@@ -208,6 +305,30 @@ FACE_TO_FACE_BANK = {
             'question_template': "At 2:00 AM, a critical production database reaches 99% disk capacity and crashes during a peak traffic event. How do you triage the emergency, recover data safely, and what preventive safeguards do you install?",
             'expected_concepts': ['triage', 'disk expansion', 'failover', 'retention', 'alerts', 'log rotation', 'postmortem'],
             'guidance': "Focus on failover replicas, log pruning, automated volume expansion, alerting thresholds, and blameless postmortem."
+        },
+        {
+            'type': 'Kubernetes Troubleshooting & Lifecycle',
+            'question_template': "A critical Kubernetes Deployment is stuck in CrashLoopBackOff and OOMKilled state following a new release. Walk through the exact diagnostic steps, kubectl commands, and remediation strategies you would employ.",
+            'expected_concepts': ['kubectl', 'crashloopbackoff', 'oomkilled', 'describe', 'logs', 'resource limits', 'requests', 'cgroup'],
+            'guidance': "Explain `kubectl describe pod`, analyzing exit codes (137 for OOM), checking memory limits/requests, and JVM heap tuning."
+        },
+        {
+            'type': 'Infrastructure as Code (IaC) & Drift',
+            'question_template': "How do you manage multi-environment cloud infrastructure using Terraform or OpenTofu? How do you handle state locking, module reusability, and detect configuration drift?",
+            'expected_concepts': ['terraform', 'state file', 's3 backend', 'dynamodb locking', 'modules', 'drift', 'plan', 'remote state'],
+            'guidance': "Cover remote state backends with locking, modular code, Terraform plan diffs, and automated drift detection."
+        },
+        {
+            'type': 'Observability, Tracing & SLIs/SLOs',
+            'question_template': "How do you implement full-stack observability with OpenTelemetry, Prometheus, and Grafana? How do you define SLIs, SLOs, and Error Budgets to balance feature velocity with system reliability?",
+            'expected_concepts': ['opentelemetry', 'prometheus', 'grafana', 'tracing', 'sli', 'slo', 'error budget', 'metrics'],
+            'guidance': "Discuss distributed tracing with trace IDs, distributed logs, rate-of-error SLIs, and burn-rate alerts."
+        },
+        {
+            'type': 'Cloud Security & Zero-Trust Architecture',
+            'question_template': "How do you implement Zero-Trust security across cloud networks and Kubernetes? Explain network policies, service meshes (mTLS), and least-privilege IAM roles.",
+            'expected_concepts': ['zero trust', 'mtls', 'istio', 'network policy', 'iam', 'least privilege', 'vpc', 'oidc'],
+            'guidance': "Detail mutual TLS via service mesh, pod-to-pod network policies, OIDC for CI/CD runners without long-lived keys."
         }
     ],
     'mobile': [
@@ -218,7 +339,7 @@ FACE_TO_FACE_BANK = {
             'guidance': "Share key apps you've built, user ratings, offline performance, and passion for mobile ergonomics."
         },
         {
-            'type': 'Technical Architecture',
+            'type': 'Technical Architecture & Offline Sync',
             'question_template': "How do you manage offline-first synchronization, local SQLite/Room caching, and background work without draining user battery and memory?",
             'expected_concepts': ['offline', 'caching', 'sqlite', 'room', 'background', 'memory', 'sync', 'battery'],
             'guidance': "Discuss optimistic UI updates, conflict resolution algorithms, WorkManager / background tasks, and leak detection."
@@ -228,6 +349,30 @@ FACE_TO_FACE_BANK = {
             'question_template': "Your newly released mobile app update crashes on startup for 30% of users running a specific OS version. How do you detect this immediately, halt the rollout, and ship a hotfix?",
             'expected_concepts': ['crashlytics', 'phased rollout', 'staged rollout', 'hotfix', 'regression', 'monitoring'],
             'guidance': "Explain staged rollouts (e.g. 5% -> 20%), Crashlytics/Sentry alerts, and emergency patch submissions."
+        },
+        {
+            'type': 'Memory Management & Bundle Size',
+            'question_template': "How do you profile and eliminate memory leaks and reduce APK/IPA application bundle sizes for users on low-bandwidth networks?",
+            'expected_concepts': ['leakcanary', 'memory leak', 'profiler', 'bitmaps', 'bundle size', 'proguard', 'r8', 'tree shaking'],
+            'guidance': "Discuss LeakCanary, bitmap recycling, ProGuard/R8 code shrinking, dynamic feature modules, and vector assets."
+        },
+        {
+            'type': 'App Lifecycle & Deep Linking',
+            'question_template': "How do you handle complex navigation states and universal/deep links across iOS and Android when an application is cold-started versus resuming from background?",
+            'expected_concepts': ['deep link', 'universal link', 'cold start', 'lifecycle', 'navigation', 'intent', 'state restoration'],
+            'guidance': "Explain handling intents/universal links, preserving navigation backstack, and restoring state during process death."
+        },
+        {
+            'type': 'Device Security & Key Management',
+            'question_template': "How do you securely store user credentials, tokens, and sensitive data on mobile devices? How do you prevent reverse engineering and API tampering?",
+            'expected_concepts': ['keychain', 'keystore', 'biometrics', 'ssl pinning', 'obfuscation', 'encryption', 'tamper'],
+            'guidance': "Discuss iOS Keychain, Android Keystore, EncryptedSharedPreferences, SSL Certificate Pinning, and integrity checks."
+        },
+        {
+            'type': 'Mobile CI/CD & Automated Testing',
+            'question_template': "Describe an automated mobile CI/CD pipeline using Fastlane or GitHub Actions that builds, runs automated UI tests, and deploys to TestFlight and Google Play Internal Track.",
+            'expected_concepts': ['fastlane', 'testflight', 'play console', 'signing certificates', 'provisioning', 'e2e', 'automation'],
+            'guidance': "Cover Fastlane match for certificates, automated unit/UI tests, semantic version bumping, and test distribution."
         }
     ],
     'php': [
@@ -248,6 +393,30 @@ FACE_TO_FACE_BANK = {
             'question_template': "Your PHP API begins experiencing high memory usage and response times degrading from 80ms to over 2.5 seconds under peak traffic. How do you diagnose bottlenecks with OPcache, profiling tools, and database query optimization?",
             'expected_concepts': ['opcache', 'profiling', 'n+1', 'indexing', 'queues', 'redis', 'caching', 'fpm'],
             'guidance': "Explain PHP-FPM worker tuning, OPcache memory, N+1 query identification, and moving heavy jobs to background queues."
+        },
+        {
+            'type': 'Modern PHP 8+ Features & OOP',
+            'question_template': "How do modern PHP 8.x features (such as Named Arguments, Attributes, Match expressions, Constructor Property Promotion, and Enums) improve type safety and maintainability in domain-driven architectures?",
+            'expected_concepts': ['php 8', 'attributes', 'match', 'property promotion', 'enums', 'type safety', 'interfaces', 'solid'],
+            'guidance': "Highlight strict types (`declare(strict_types=1)`), typed properties, Enums for state modeling, and clean code."
+        },
+        {
+            'type': 'Asynchronous PHP & Background Queues',
+            'question_template': "Since PHP is traditionally synchronous, how do you handle asynchronous tasks like heavy video processing, email dispatching, or webhook notifications? Discuss Laravel Queues, Horizon, and Redis or RabbitMQ.",
+            'expected_concepts': ['queues', 'redis', 'horizon', 'rabbitmq', 'workers', 'retry', 'dead letter', 'async'],
+            'guidance': "Explain job dispatching, queue workers, failure handling with dead-letter queues, and supervisor process management."
+        },
+        {
+            'type': 'API Architecture & Best Practices',
+            'question_template': "How do you design scalable REST APIs in PHP? Discuss request validation, API resources/transformers, pagination standards, and rate limiting with Redis.",
+            'expected_concepts': ['api resource', 'transformer', 'validation', 'pagination', 'rate limit', 'status codes', 'json'],
+            'guidance': "Cover Form Request validation, fractal/API resources to decouple DB models from JSON output, and cursor pagination."
+        },
+        {
+            'type': 'Unit Testing & TDD in PHP',
+            'question_template': "How do you structure comprehensive automated testing in PHP using PHPUnit or Pest? How do you mock external services, database transactions, and test API endpoints?",
+            'expected_concepts': ['phpunit', 'pest', 'mockery', 'transactions', 'refresh database', 'assertions', 'factories'],
+            'guidance': "Discuss model factories, database transaction rollbacks between tests, mocking HTTP clients, and high test coverage."
         }
     ],
     'sql': [
@@ -268,6 +437,30 @@ FACE_TO_FACE_BANK = {
             'question_template': "A high-concurrency payment table experiences frequent database deadlocks during promotional flash sales. How do you use transaction isolation levels, row-level locking (SELECT FOR UPDATE), and query re-ordering to eliminate deadlocks?",
             'expected_concepts': ['deadlock', 'isolation levels', 'row lock', 'select for update', 'acid', 'locking order'],
             'guidance': "Explain consistent lock ordering, keeping transactions short, and selecting appropriate isolation (e.g. Read Committed)."
+        },
+        {
+            'type': 'Window Functions & CTEs',
+            'question_template': "How do you use SQL Window Functions (like ROW_NUMBER(), RANK(), DENSE_RANK(), and LAG/LEAD) and Recursive Common Table Expressions (CTEs) to solve complex analytical reporting problems?",
+            'expected_concepts': ['window functions', 'over', 'partition by', 'order by', 'cte', 'recursive', 'rank', 'lag', 'lead'],
+            'guidance': "Differentiate RANK vs DENSE_RANK, explain framing clauses (`ROWS BETWEEN`), and hierarchical parent-child querying with Recursive CTEs."
+        },
+        {
+            'type': 'Normalization vs Denormalization',
+            'question_template': "Walk through the trade-offs between 3rd Normal Form (3NF) and Denormalization. When is it appropriate to denormalize data for high-throughput read systems, and how do you protect data integrity?",
+            'expected_concepts': ['normalization', '3nf', 'denormalization', 'redundancy', 'joins', 'read heavy', 'materialized views', 'integrity'],
+            'guidance': "Explain eliminating update anomalies in 3NF versus avoiding expensive multi-table joins in read-heavy analytics."
+        },
+        {
+            'type': 'Query Plan Optimization & EXPLAIN',
+            'question_template': "Walk me through how you interpret an EXPLAIN (ANALYZE, BUFFERS) execution plan in PostgreSQL. What does a Seq Scan versus Index Scan tell you, and how do you fix bad Cardinality estimates caused by stale statistics?",
+            'expected_concepts': ['explain analyze', 'seq scan', 'index scan', 'buffers', 'analyze', 'vacuump', 'statistics', 'cost'],
+            'guidance': "Discuss cost models, actual rows vs estimated rows, `ANALYZE` for updating optimizer stats, and memory work_mem."
+        },
+        {
+            'type': 'Partitioning & Replication',
+            'question_template': "How do you partition a multi-terabyte database table (by range, list, or hash)? What are the differences between synchronous and asynchronous streaming replication, and how do you handle failover?",
+            'expected_concepts': ['partitioning', 'sharding', 'replication', 'primary replica', 'failover', 'wal', 'high availability'],
+            'guidance': "Explain table partitioning by date range, WAL shipping, replication lag, and automated quorum failover."
         }
     ],
     'html_css': [
@@ -288,6 +481,30 @@ FACE_TO_FACE_BANK = {
             'question_template': "How do you eliminate Cumulative Layout Shift (CLS) and optimize rendering performance (minimizing layout reflows and repaints) across desktop and mobile viewports?",
             'expected_concepts': ['cls', 'aspect-ratio', 'web vitals', 'reflow', 'repaint', 'will-change', 'font display', 'critical css'],
             'guidance': "Discuss reserving image dimensions with aspect-ratio, `font-display: swap`, GPU-accelerated transforms, and critical CSS."
+        },
+        {
+            'type': 'Modern CSS & Container Queries',
+            'question_template': "How do modern CSS features like CSS Container Queries, clamp(), :has() selector, and Subgrid transform responsive design compared to traditional media queries?",
+            'expected_concepts': ['container queries', 'clamp', ':has', 'subgrid', 'fluid typography', 'viewport', 'parent selector'],
+            'guidance': "Explain component-driven sizing with `@container`, fluid scales with `clamp(min, preferred, max)`, and style trees using `:has()`."
+        },
+        {
+            'type': 'Web Accessibility & Assistive Tech',
+            'question_template': "How do you ensure web pages are fully accessible to screen reader users and keyboard-only navigators? Discuss landmark roles, skip links, aria-labels, and color contrast compliance.",
+            'expected_concepts': ['accessibility', 'screen reader', 'skip link', 'landmark', 'aria-label', 'contrast', 'keyboard navigation'],
+            'guidance': "Cover semantic tags (<header>, <main>, <nav>), skip-to-content links, visible focus outlines, and WCAG AA contrast."
+        },
+        {
+            'type': 'CSS Animations & GPU Layer Promotion',
+            'question_template': "How do you create smooth 60 FPS CSS animations and micro-interactions without causing jank? Explain the browser rendering pipeline (Composite vs Layout vs Paint) and the transform and opacity properties.",
+            'expected_concepts': ['gpu', 'transform', 'opacity', 'will-change', 'reflow', 'paint', 'composite', 'jank', 'fps'],
+            'guidance': "Explain GPU layer promotion, keeping animations confined to transform/opacity to bypass layout/paint recalculations."
+        },
+        {
+            'type': 'Native Form Validation & UX',
+            'question_template': "How do you leverage native HTML5 form validation attributes (like pattern, required, inputmode, min/max) for an accessible, mobile-friendly user input experience with custom CSS styling via :valid and :invalid?",
+            'expected_concepts': ['html5 form', 'pattern', 'required', 'inputmode', ':valid', ':invalid', 'accessibility', 'ux'],
+            'guidance': "Discuss mobile keyboard adaptation via inputmode, constraint validation API, and non-intrusive error styling."
         }
     ],
     'dart': [
@@ -308,6 +525,30 @@ FACE_TO_FACE_BANK = {
             'question_template': "How do you architect state management in a large-scale Flutter application (e.g. Bloc, Riverpod, or Provider)? How do you prevent unnecessary widget rebuilds to maintain a seamless 60/120 FPS UI?",
             'expected_concepts': ['bloc', 'riverpod', 'provider', 'rebuild', 'const widgets', 'keys', 'devtools'],
             'guidance': "Emphasize `const` constructors, granular state selectors, RepaintBoundaries, and Flutter DevTools profiling."
+        },
+        {
+            'type': 'Widget Tree & Render Pipeline',
+            'question_template': "Explain the Flutter rendering architecture: the relationship between the Widget Tree, Element Tree, and RenderObject Tree. What happens under the hood when setState() is called?",
+            'expected_concepts': ['widget tree', 'element tree', 'renderobject', 'setstate', 'diffing', 'rebuild', 'layout', 'paint'],
+            'guidance': "Explain immutable configuration widgets vs persistent Element instances, dirty marking, and efficient tree diffing."
+        },
+        {
+            'type': 'Sound Null Safety & Types',
+            'question_template': "How does Dart's Sound Null Safety prevent runtime crashes? Discuss nullable types (?), late initialization (late), and null-aware operators (?. , ?? , ??=).",
+            'expected_concepts': ['sound null safety', 'late', 'nullable', 'flow analysis', 'null-aware', 'compile time', 'unhandled exception'],
+            'guidance': "Discuss compile-time guarantees, dead code elimination, and preventing NullPointerException equivalents."
+        },
+        {
+            'type': 'Platform Channels & Native Bridge',
+            'question_template': "When Flutter does not support an OS feature out of the box, how do you communicate with native Android (Kotlin) or iOS (Swift) code using Platform Channels (MethodChannel and EventChannel)?",
+            'expected_concepts': ['methodchannel', 'eventchannel', 'native', 'kotlin', 'swift', 'serialization', 'binary messenger'],
+            'guidance': "Explain asynchronous message passing via binary serialization, error handling, and continuous data streams with EventChannel."
+        },
+        {
+            'type': 'DevTools Profiling & Leak Detection',
+            'question_template': "How do you use Flutter DevTools to inspect frame rendering time, eliminate UI jank, and identify memory leaks caused by unclosed StreamControllers or AnimationControllers?",
+            'expected_concepts': ['flutter devtools', 'timeline', 'jank', 'streamcontroller', 'animationcontroller', 'dispose', 'memory leak'],
+            'guidance': "Emphasize proper `dispose()` lifecycles, memory snapshot diffs, and keeping frame rendering under 16ms (60 FPS)."
         }
     ],
     'swift': [
@@ -318,8 +559,8 @@ FACE_TO_FACE_BANK = {
             'guidance': "Discuss your app releases on the App Store, native user experience, and your love for Apple platform design guidelines."
         },
         {
-            'type': 'Memory Management & Architecture',
-            'question_template': "Explain how Automatic Reference Counting (ARC) functions in Swift. What is the fundamental difference between `weak` and `unowned` references, and how do capture lists in closures prevent retain cycles and memory leaks?",
+            'type': 'Memory Management & ARC',
+            'question_template': "Explain how Automatic Reference Counting (ARC) functions in Swift. What is the fundamental difference between weak and unowned references, and how do capture lists in closures prevent retain cycles and memory leaks?",
             'expected_concepts': ['arc', 'weak', 'unowned', 'retain cycle', 'memory leak', 'capture list', 'deinit'],
             'guidance': "Discuss strong reference cycles, delegating with weak protocols, and using `[weak self]` in completion handlers."
         },
@@ -328,6 +569,30 @@ FACE_TO_FACE_BANK = {
             'question_template': "How has modern Swift Concurrency (async/await, Tasks, Actors, and Sendable) replaced Grand Central Dispatch (GCD) for thread-safe data access and preventing data races?",
             'expected_concepts': ['actors', 'async/await', 'sendable', 'gcd', 'data race', 'mainactor', 'concurrency'],
             'guidance': "Detail Actors for state synchronization, `@MainActor` for UI updates, and compiler-checked `Sendable` types."
+        },
+        {
+            'type': 'SwiftUI State Flow & Architecture',
+            'question_template': "How do property wrappers like @State, @Binding, @ObservedObject, @StateObject, and @Environment govern state management and view updates in SwiftUI?",
+            'expected_concepts': ['@state', '@binding', '@stateobject', '@observedobject', '@environment', 'view lifecycle', 're-render', 'single source of truth'],
+            'guidance': "Differentiate `@StateObject` (lifecycle ownership) vs `@ObservedObject` (external injection), and maintaining single source of truth."
+        },
+        {
+            'type': 'Protocol-Oriented Programming (POP)',
+            'question_template': "Why is Swift often described as a Protocol-Oriented programming language? How do Protocol Extensions and Generics provide flexible code reuse over traditional OOP class inheritance?",
+            'expected_concepts': ['protocol', 'protocol extension', 'generics', 'value types', 'composition', 'pop', 'inheritance'],
+            'guidance': "Discuss default implementations in protocol extensions, favor composition and structs over deep inheritance trees."
+        },
+        {
+            'type': 'App Architecture & Clean Code',
+            'question_template': "How do you structure an iOS codebase using MVVM or Clean Architecture? How do you decouple the networking layer, view models, and UI for testability?",
+            'expected_concepts': ['mvvm', 'viewmodel', 'combine', 'async/await', 'dependency injection', 'testability', 'clean architecture'],
+            'guidance': "Explain Dependency Injection, isolating network services with protocol abstractions, and writing unit tests for ViewModels."
+        },
+        {
+            'type': 'Local Persistence (SwiftData & Core Data)',
+            'question_template': "How do you manage local data persistence in modern iOS using SwiftData or Core Data? How do you handle schema migrations and background thread synchronization?",
+            'expected_concepts': ['swiftdata', 'core data', 'migration', 'background context', 'nsmanagedobject', 'persistence', 'thread safety'],
+            'guidance': "Discuss background contexts to avoid UI freezing, automatic lightweight migration, and SwiftData's modern macro-based syntax."
         }
     ]
 }
@@ -1282,7 +1547,7 @@ console.log("HTML & CSS Challenge: Switch language to 'HTML5 & CSS3' to view cod
 # ==============================================================================
 # 4. GET FULL INTERVIEW BUNDLE FOR ANY JOB POST
 # ==============================================================================
-def get_interview_bundle(job=None, role_title='', company='Tech Innovations Inc.', category='', description=''):
+def get_interview_bundle(job=None, role_title='', company='Tech Innovations Inc.', category='', description='', randomize=True):
     """Generates customized Face-to-Face and Technical coding challenges for a specific job."""
     if job:
         role_title = job.title
@@ -1293,9 +1558,29 @@ def get_interview_bundle(job=None, role_title='', company='Tech Innovations Inc.
     dom_key, dom_meta = classify_job_domain(role_title, category, description)
     raw_f2f = FACE_TO_FACE_BANK.get(dom_key, FACE_TO_FACE_BANK['backend'])
     
+    if randomize and len(raw_f2f) > 4:
+        # Separate into introductory behavioral questions and technical deep dive/scenario questions
+        intro_pool = [q for q in raw_f2f if 'behavioral' in q.get('type', '').lower() or 'role' in q.get('type', '').lower()]
+        tech_pool = [q for q in raw_f2f if q not in intro_pool]
+        
+        selected_raw = []
+        # Always pick 1 role & behavioral introductory question
+        if intro_pool:
+            selected_raw.append(random.choice(intro_pool))
+            
+        # Sample 3 diverse technical/scenario questions without repetition
+        needed_tech = 4 - len(selected_raw)
+        if len(tech_pool) >= needed_tech:
+            selected_raw.extend(random.sample(tech_pool, needed_tech))
+        else:
+            remaining = [q for q in raw_f2f if q not in selected_raw]
+            selected_raw.extend(random.sample(remaining, min(needed_tech, len(remaining))))
+    else:
+        selected_raw = raw_f2f[:4] if len(raw_f2f) >= 4 else raw_f2f
+        
     # Personalize question templates with real job title & company
     f2f_questions = []
-    for idx, item in enumerate(raw_f2f, start=1):
+    for idx, item in enumerate(selected_raw, start=1):
         f2f_questions.append({
             'id': idx,
             'round_name': 'Round 1: Face-to-Face AI Round',
@@ -1309,7 +1594,7 @@ def get_interview_bundle(job=None, role_title='', company='Tech Innovations Inc.
     matched_challenges = [c for c in CODING_CHALLENGES if dom_key in c['domain_affinity']]
     if not matched_challenges:
         matched_challenges = CODING_CHALLENGES
-    challenge = matched_challenges[0]
+    challenge = random.choice(matched_challenges) if matched_challenges else CODING_CHALLENGES[0]
     
     return {
         'role_title': role_title,
