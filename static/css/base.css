@@ -509,3 +509,99 @@ body {
 .footer-copy {
     color: var(--text-muted);
 }
+
+/* ==========================================================================
+   MODERN PAGINATION COMPONENT
+   ========================================================================== */
+.pagination-wrapper {
+    background: #ffffff;
+    padding: 14px 20px;
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border-color);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+}
+
+.custom-pagination-list {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin: 0;
+    padding: 0;
+}
+
+.pagination-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 38px;
+    height: 38px;
+    padding: 0 14px;
+    font-size: 13.5px;
+    font-weight: 700;
+    color: var(--text-main);
+    background: #f8fafc;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    text-decoration: none;
+    transition: all 0.2s ease;
+    user-select: none;
+}
+
+.pagination-btn:hover:not(.disabled):not(.active) {
+    background: #eef2ff;
+    border-color: #c7d2fe;
+    color: var(--primary);
+    transform: translateY(-1px);
+}
+
+.pagination-btn.active {
+    background: var(--primary-gradient);
+    color: #ffffff;
+    border-color: var(--primary);
+    box-shadow: 0 3px 8px rgba(79, 70, 229, 0.3);
+}
+
+.pagination-btn.disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+    background: #f8fafc;
+    border-color: #e2e8f0;
+    color: var(--text-muted);
+}
+
+.pagination-ellipsis {
+    color: var(--text-muted);
+    font-weight: 700;
+    padding: 0 6px;
+}
+
+/* ==========================================================================
+   ANALYTICS CHART CARDS
+   ========================================================================== */
+.chart-card {
+    background: #ffffff;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-xl);
+    padding: 1.6rem;
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+    display: flex;
+    flex-direction: column;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.chart-card:hover {
+    box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.08);
+}
+
+.chart-card-header {
+    margin-bottom: 1.25rem;
+    padding-bottom: 0.85rem;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.chart-title {
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: var(--secondary);
+    letter-spacing: -0.3px;
+}

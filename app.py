@@ -141,6 +141,7 @@ def index():
     category = request.args.get('category', '').strip()
     location = request.args.get('location', '').strip()
     company = request.args.get('company', '').strip()
+    page = request.args.get('page', 1, type=int)
     
     if search:
         query = query.filter(
@@ -155,7 +156,9 @@ def index():
     if company:
         query = query.filter(Job.company.ilike(f'%{company}%'))
         
-    jobs = query.order_by(Job.created_at.desc()).all()
+    # Pagination: 5 jobs per page
+    pagination = query.order_by(Job.created_at.desc()).paginate(page=page, per_page=5, error_out=False)
+    jobs = pagination.items
     
     # Extract distinct categories for filter buttons/dropdown
     all_jobs = Job.query.all()
@@ -167,6 +170,7 @@ def index():
         'index.html', 
         user=current_user, 
         jobs=jobs,
+        pagination=pagination,
         categories=categories,
         search=search,
         category=category,
@@ -400,22 +404,54 @@ def view_applications():
 @login_required
 @admin_required
 def admin_dashboard():
-    employers = User.query.filter_by(is_employer=True).order_by(User.date_created.desc()).all()
-    jobs = Job.query.order_by(Job.created_at.desc()).all()
-    applications = Application.query.order_by(Application.applied_on.desc()).all()
-    users = {u.id: u for u in User.query.all()}
-
-    pending_employers_count = sum(1 for e in employers if not e.is_approved)
+    from collections import Counter
+    
+    # Global KPI totals
     total_candidates_count = User.query.filter_by(is_employer=False, is_admin=False).count()
+    total_employers_count = User.query.filter_by(is_employer=True).count()
+    pending_employers_count = User.query.filter_by(is_employer=True, is_approved=False).count()
+    total_jobs_count = Job.query.count()
+    total_applications_count = Application.query.count()
+
+    # Pagination: 5 records per page for each table
+    emp_page = request.args.get('emp_page', 1, type=int)
+    app_page = request.args.get('app_page', 1, type=int)
+    job_page = request.args.get('job_page', 1, type=int)
+
+    employers_pag = User.query.filter_by(is_employer=True).order_by(User.date_created.desc()).paginate(page=emp_page, per_page=5, error_out=False)
+    applications_pag = Application.query.order_by(Application.applied_on.desc()).paginate(page=app_page, per_page=5, error_out=False)
+    jobs_pag = Job.query.order_by(Job.created_at.desc()).paginate(page=job_page, per_page=5, error_out=False)
+
+    # Graphical Data aggregation
+    all_applications = Application.query.all()
+    status_distribution = {
+        'Pending': sum(1 for a in all_applications if a.status == 'Pending'),
+        'Under Review': sum(1 for a in all_applications if a.status == 'Under Review'),
+        'Accepted': sum(1 for a in all_applications if a.status == 'Accepted'),
+        'Rejected': sum(1 for a in all_applications if a.status == 'Rejected'),
+    }
+
+    all_jobs = Job.query.all()
+    category_counts = dict(Counter(j.category or 'General' for j in all_jobs))
+
+    users = {u.id: u for u in User.query.all()}
 
     return render_template(
         'admin.html',
-        employers=employers,
-        jobs=jobs,
-        applications=applications,
+        employers=employers_pag.items,
+        employers_pag=employers_pag,
+        jobs=jobs_pag.items,
+        jobs_pag=jobs_pag,
+        applications=applications_pag.items,
+        applications_pag=applications_pag,
         users=users,
+        total_candidates_count=total_candidates_count,
+        total_employers_count=total_employers_count,
         pending_employers_count=pending_employers_count,
-        total_candidates_count=total_candidates_count
+        total_jobs_count=total_jobs_count,
+        total_applications_count=total_applications_count,
+        status_distribution=status_distribution,
+        category_distribution=category_counts
     )
 
 

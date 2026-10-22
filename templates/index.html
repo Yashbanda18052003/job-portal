@@ -99,7 +99,7 @@
             <h2 class="section-title mb-1">Available Job Openings</h2>
             <p class="text-muted small mb-0">
                 {% if jobs %}
-                    Showing {{ jobs|length }} active positions matching your criteria
+                    Showing {{ jobs|length }} of {{ pagination.total if pagination else jobs|length }} active positions matching your criteria
                 {% else %}
                     No matching positions found
                 {% endif %}
@@ -172,6 +172,52 @@
                 </div>
             {% endfor %}
         </div>
+
+        <!-- PAGINATION CONTROLS (5 JOBS PER PAGE) -->
+        {% if pagination and pagination.pages > 1 %}
+        <nav class="pagination-wrapper d-flex justify-content-between align-items-center mt-4 pt-3 border-top flex-wrap gap-3">
+            <div class="text-muted small">
+                Showing Page <strong class="text-dark">{{ pagination.page }}</strong> of <strong class="text-dark">{{ pagination.pages }}</strong> ({{ pagination.total }} active listings)
+            </div>
+            <ul class="custom-pagination-list d-flex align-items-center mb-0 list-unstyled gap-1">
+                {% if pagination.has_prev %}
+                    <li>
+                        <a href="{{ url_for('index', page=pagination.prev_num, search=search, category=category, location=location) }}" class="pagination-btn">
+                            ← Prev
+                        </a>
+                    </li>
+                {% else %}
+                    <li><span class="pagination-btn disabled">← Prev</span></li>
+                {% endif %}
+
+                {% for p in pagination.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+                    {% if p %}
+                        {% if p == pagination.page %}
+                            <li><span class="pagination-btn active">{{ p }}</span></li>
+                        {% else %}
+                            <li>
+                                <a href="{{ url_for('index', page=p, search=search, category=category, location=location) }}" class="pagination-btn">
+                                    {{ p }}
+                                </a>
+                            </li>
+                        {% endif %}
+                    {% else %}
+                        <li><span class="pagination-ellipsis">…</span></li>
+                    {% endif %}
+                {% endfor %}
+
+                {% if pagination.has_next %}
+                    <li>
+                        <a href="{{ url_for('index', page=pagination.next_num, search=search, category=category, location=location) }}" class="pagination-btn">
+                            Next →
+                        </a>
+                    </li>
+                {% else %}
+                    <li><span class="pagination-btn disabled">Next →</span></li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
     {% else %}
         <!-- EMPTY STATE -->
         <div class="empty-state-card text-center py-5 my-4">
